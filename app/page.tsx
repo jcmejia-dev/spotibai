@@ -1,12 +1,20 @@
 "use client";
-import {useEffect,useState} from "react";
-import {ArrowLeft, ArrowRight, Disc3, Heart, Home, Library, ListMusic, Menu, Music2, Plus, Search, X, Settings2, Check} from "lucide-react";
+import {useEffect,useRef,useState} from "react";
+import {ArrowLeft, ArrowRight, Disc3, Heart, Home, Library, ListMusic, Menu, Music2, Plus, Search, X, Settings2, Check, Clock3} from "lucide-react";
 import YouTubeMusic from "./youtube/page";
 
 type Screen="home"|"search"|"favorites"|"playlists"|"profile";
 export default function Page(){
  const [screen,setScreen]=useState<Screen>("home");
  const [query,setQuery]=useState("");
+ const [suggestions,setSuggestions]=useState<{id:string;title:string;artist:string;thumbnail:string}[]>([]);
+ const [recent,setRecent]=useState<string[]>([]);
+ const [suggestOpen,setSuggestOpen]=useState(false);
+ const [suggestLoading,setSuggestLoading]=useState(false);
+ const [selectedSuggestion,setSelectedSuggestion]=useState(-1);
+ const lookupCount=useRef(0);
+ const cache=useRef<Record<string,{id:string;title:string;artist:string;thumbnail:string}[]>>({});
+ const searchBox=useRef<HTMLDivElement>(null);
  const [submitted,setSubmitted]=useState("");
  const [drawer,setDrawer]=useState(false);
  const [newPlaylist,setNewPlaylist]=useState(0);
@@ -15,11 +23,14 @@ export default function Page(){
  const [accent,setAccent]=useState("#b28dff");
  const [motion,setMotion]=useState(true);
  useEffect(()=>{try{setMode(localStorage.getItem("spotibai-mode")||"dark");setAccent(localStorage.getItem("spotibai-accent")||"#b28dff");setMotion(localStorage.getItem("spotibai-motion")!=="false")}catch{}},[]);
+ useEffect(()=>{try{setRecent(JSON.parse(localStorage.getItem("spotibai-recent-searches")||"[]"))}catch{}},[]);
+ useEffect(()=>{const onPointer=(event:PointerEvent)=>{if(searchBox.current&&!searchBox.current.contains(event.target as Node))setSuggestOpen(false)};document.addEventListener("pointerdown",onPointer);return()=>document.removeEventListener("pointerdown",onPointer)},[]);
+ useEffect(()=>{const term=query.trim();if(!suggestOpen||term.length<3){setSuggestions([]);return}const key=term.toLowerCase();if(cache.current[key]){setSuggestions(cache.current[key]);return}if(lookupCount.current>=6){setSuggestions([]);return}const controller=new AbortController();const timer=setTimeout(async()=>{lookupCount.current++;setSuggestLoading(true);try{const response=await fetch("/api/youtube/search?q="+encodeURIComponent(term),{signal:controller.signal});if(!response.ok)throw Error("Search unavailable");const data=await response.json();const items=(data.items||[]).slice(0,6);cache.current[key]=items;setSuggestions(items)}catch(e){if(!controller.signal.aborted)setSuggestions([])}finally{if(!controller.signal.aborted)setSuggestLoading(false)}},1200);return()=>{clearTimeout(timer);controller.abort()}},[query,suggestOpen]);
  const setTheme=(v:string)=>{setMode(v);localStorage.setItem("spotibai-mode",v)};
  const setColor=(v:string)=>{setAccent(v);localStorage.setItem("spotibai-accent",v)};
  const setAnimation=(v:boolean)=>{setMotion(v);localStorage.setItem("spotibai-motion",String(v))};
  const go=(screen:Screen)=>{setScreen(screen);setNavigationSignal(v=>v+1);setDrawer(false)};
- const find=(q:string)=>{setQuery(q);setSubmitted(q);go("search")};
+ const find=(q:string)=>{if(!q.trim())return;const term=q.trim();setQuery(term);setSubmitted(term);setSuggestOpen(false);setSelectedSuggestion(-1);const updated=[term,...recent.filter(x=>x.toLowerCase()!==term.toLowerCase())].slice(0,6);setRecent(updated);localStorage.setItem("spotibai-recent-searches",JSON.stringify(updated));go("search")};
  const heading=(name:string)=>{find(name)};
  return <div className={"app spotibai-real theme-"+mode+(motion?"":" no-motion")} style={{"--accent":accent} as React.CSSProperties}>
  <aside className={"sidebar "+(drawer?"show":"")}>
@@ -40,7 +51,15 @@ export default function Page(){
  <main className="main">
   <header className="topbar">
    <div className="history"><button className="menu-toggle icon-button" onClick={()=>setDrawer(true)} aria-label="Open menu"><Menu size={21}/></button><button className="circle" onClick={()=>go("home")} aria-label="Go home"><ArrowLeft size={17}/></button><button className="circle" onClick={()=>go("search")} aria-label="Go to search"><ArrowRight size={17}/></button></div>
-   <form className="searchbox" onSubmit={e=>{e.preventDefault();find(query.trim())}}><Search size={18}/><input aria-label="Search YouTube music" value={query} placeholder="Search for songs or artists..." onFocus={()=>go("search")} onChange={e=>setQuery(e.target.value)}/><button type="submit" className="top-search-submit" aria-label="Search"><Search size={16}/></button></form>
+   <div className="spot-search-wrap" ref={searchBox}>
+    <form className="searchbox" onSubmit={e=>{e.preventDefault();find(selectedSuggestion>=0&&suggestions[selectedSuggestion]?suggestions[selectedSuggestion].title:query)}}><Search size={18}/><input aria-label="Search YouTube music" value={query} placeholder="Search for songs or artists..." autoComplete="off" onFocus={()=>{setSuggestOpen(true);setSelectedSuggestion(-1);go("search")}} onChange={e=>{setQuery(e.target.value);setSelectedSuggestion(-1);setSuggestOpen(true)}} onKeyDown={e=>{if(e.key==="Escape"){setSuggestOpen(false);e.currentTarget.blur()}else if(e.key==="ArrowDown"){e.preventDefault();setSelectedSuggestion(v=>Math.min(v+1,suggestions.length-1))}else if(e.key==="ArrowUp"){e.preventDefault();setSelectedSuggestion(v=>Math.max(v-1,-1))}}}/><button type="submit" className="top-search-submit" aria-label="Search"><Search size={16}/></button></form>
+    {suggestOpen&&(query.trim()||recent.length>0)&&<div className="spot-suggestions" role="listbox" aria-label="Music search suggestions">
+     {query.trim().length>=3&&<div className="spot-suggest-heading">{suggestLoading?"Finding songs...":suggestions.length?"Suggested songs":lookupCount.current>=6?"Live suggestions limit reached — press Enter to search":"Search suggestions"}</div>}
+     {suggestions.map((song,i)=><button key={song.id} role="option" aria-selected={selectedSuggestion===i} className={selectedSuggestion===i?"highlight":""} onMouseDown={e=>e.preventDefault()} onClick={()=>find(song.title)}>{song.thumbnail?<img src={song.thumbnail} alt=""/>:<Music2 size={18}/>}<span><strong>{song.title}</strong><small>{song.artist}</small></span><Search size={15}/></button>)}
+     {!query.trim()&&recent.length>0&&<><div className="spot-suggest-heading">Recent searches</div>{recent.map(item=><button key={item} onMouseDown={e=>e.preventDefault()} onClick={()=>find(item)}><Clock3 size={17}/><span><strong>{item}</strong></span><Search size={15}/></button>)}</>}
+     {query.trim()&&<button className="spot-suggest-all" onMouseDown={e=>e.preventDefault()} onClick={()=>find(query)}>Search for “{query.trim()}” <Search size={16}/></button>}
+    </div>}
+   </div>
    <div className="top-actions"><a href="/audius" style={{color:"#d4b4ff",fontSize:12,fontWeight:800,textDecoration:"none",whiteSpace:"nowrap"}}>Audius Player ↗</a><button className="avatar" title="Profile and settings" aria-label="Open settings" onClick={()=>go("profile")}>S</button></div>
   </header>
   <div className="scroll-content">
