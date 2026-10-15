@@ -8,7 +8,7 @@ const FAVORITES="spotibai-youtube-favorites-v1";
 const PLAYLISTS="spotibai-youtube-playlists-v1";
 function load<T>(key:string,fallback:T):T {try{const value=localStorage.getItem(key);return value?JSON.parse(value) as T:fallback}catch{return fallback}}
 function decode(s:string){if(typeof document==="undefined")return s;const el=document.createElement("textarea");el.innerHTML=s;return el.value}
-export default function YouTubeMusic(){
+export default function YouTubeMusic({embedded=false,initialQuery=""}:{embedded?:boolean;initialQuery?:string}){
  const [q,setQ]=useState("");const [term,setTerm]=useState("");
  const [results,setResults]=useState<Song[]>([]);
  const [favorites,setFavorites]=useState<Song[]>([]);
@@ -18,6 +18,7 @@ export default function YouTubeMusic(){
  const [playing,setPlaying]=useState<Song|null>(null);
  const [menu,setMenu]=useState<string|null>(null);
  useEffect(()=>{setFavorites(load(FAVORITES,[]));setPlaylists(load(PLAYLISTS,{}))},[]);
+ useEffect(()=>{if(initialQuery.trim()){setQ(initialQuery);search(initialQuery)}},[initialQuery]);
  const saveFav=(next:Song[])=>{setFavorites(next);localStorage.setItem(FAVORITES,JSON.stringify(next))};
  const saveLists=(next:Record<string,Song[]>)=>{setPlaylists(next);localStorage.setItem(PLAYLISTS,JSON.stringify(next))};
  const favorite=(song:Song)=>saveFav(favorites.some(s=>s.id===song.id)?favorites.filter(s=>s.id!==song.id):[song,...favorites]);
@@ -26,7 +27,7 @@ export default function YouTubeMusic(){
  const search=async(query:string)=>{if(!query.trim())return;setTerm(query.trim());setLoading(true);setError("");setSection("discover");try{const res=await fetch("/api/youtube/search?q="+encodeURIComponent(query.trim()));const data=await res.json();if(!res.ok)throw Error(data.error||"Search failed");setResults(data.items||[])}catch(e){setError(e instanceof Error?e.message:"Search failed");setResults([])}finally{setLoading(false)}};
  const shown=section==="favorites"?favorites:section==="discover"?results:playlists[section]||[];
  const removePlaylist=()=>{if(!window.confirm("Delete this playlist?"))return;const next={...playlists};delete next[section];saveLists(next);setSection("discover")};
- return <div className="yt-app">
+ return <div className={"yt-app "+(embedded?"yt-embedded":"")}>
   <aside className="yt-sidebar"><a className="yt-logo" href="/"><span>♪</span> spotibai.</a><a className="yt-back" href="/"><ArrowLeft size={17}/> Back to Spotibai</a><div className="yt-side-label">YOUTUBE DISCOVERY</div>
     <button className={section==="discover"?"yt-on":""} onClick={()=>setSection("discover")}><Search size={17}/> Search music</button>
     <button className={section==="favorites"?"yt-on":""} onClick={()=>setSection("favorites")}><Heart size={17}/> Liked videos <small>{favorites.length}</small></button>
