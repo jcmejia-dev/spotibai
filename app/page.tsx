@@ -15,6 +15,9 @@ export default function Page(){
  const lookupCount=useRef(0);
  const cache=useRef<Record<string,{id:string;title:string;artist:string;thumbnail:string}[]>>({});
  const searchBox=useRef<HTMLDivElement>(null);
+ const scrollArea=useRef<HTMLDivElement>(null);
+ const magicTimer=useRef<ReturnType<typeof setTimeout>|null>(null);
+ const [magic,setMagic]=useState(false);
  const [submitted,setSubmitted]=useState("");
  const [drawer,setDrawer]=useState(false);
  const [newPlaylist,setNewPlaylist]=useState(0);
@@ -26,10 +29,12 @@ export default function Page(){
  useEffect(()=>{try{setRecent(JSON.parse(localStorage.getItem("spotibai-recent-searches")||"[]"))}catch{}},[]);
  useEffect(()=>{const onPointer=(event:PointerEvent)=>{if(searchBox.current&&!searchBox.current.contains(event.target as Node))setSuggestOpen(false)};document.addEventListener("pointerdown",onPointer);return()=>document.removeEventListener("pointerdown",onPointer)},[]);
  useEffect(()=>{const term=query.trim();if(!suggestOpen||term.length<3){setSuggestions([]);return}const key=term.toLowerCase();if(cache.current[key]){setSuggestions(cache.current[key]);return}if(lookupCount.current>=6){setSuggestions([]);return}const controller=new AbortController();const timer=setTimeout(async()=>{lookupCount.current++;setSuggestLoading(true);try{const response=await fetch("/api/youtube/search?q="+encodeURIComponent(term),{signal:controller.signal});if(!response.ok)throw Error("Search unavailable");const data=await response.json();const items=(data.items||[]).slice(0,6);cache.current[key]=items;setSuggestions(items)}catch(e){if(!controller.signal.aborted)setSuggestions([])}finally{if(!controller.signal.aborted)setSuggestLoading(false)}},1200);return()=>{clearTimeout(timer);controller.abort()}},[query,suggestOpen]);
- const setTheme=(v:string)=>{setMode(v);localStorage.setItem("spotibai-mode",v)};
- const setColor=(v:string)=>{setAccent(v);localStorage.setItem("spotibai-accent",v)};
+ const sparkle=()=>{if(!motion)return;setMagic(false);if(magicTimer.current)clearTimeout(magicTimer.current);requestAnimationFrame(()=>setMagic(true));magicTimer.current=setTimeout(()=>setMagic(false),800)};
+ useEffect(()=>()=>{if(magicTimer.current)clearTimeout(magicTimer.current)},[]);
+ const setTheme=(v:string)=>{setMode(v);localStorage.setItem("spotibai-mode",v);sparkle()};
+ const setColor=(v:string)=>{setAccent(v);localStorage.setItem("spotibai-accent",v);sparkle()};
  const setAnimation=(v:boolean)=>{setMotion(v);localStorage.setItem("spotibai-motion",String(v))};
- const go=(screen:Screen)=>{setScreen(screen);setNavigationSignal(v=>v+1);setDrawer(false)};
+ const go=(screen:Screen)=>{setScreen(screen);setNavigationSignal(v=>v+1);setDrawer(false);scrollArea.current?.scrollTo({top:0,behavior:"instant"})};
  const find=(q:string)=>{if(!q.trim())return;const term=q.trim();setQuery(term);setSubmitted(term);setSuggestOpen(false);setSelectedSuggestion(-1);const updated=[term,...recent.filter(x=>x.toLowerCase()!==term.toLowerCase())].slice(0,6);setRecent(updated);localStorage.setItem("spotibai-recent-searches",JSON.stringify(updated));go("search")};
  const heading=(name:string)=>{find(name)};
  return <div className={"app spotibai-real theme-"+mode+(motion?"":" no-motion")} style={{"--accent":accent} as React.CSSProperties}>
@@ -62,7 +67,7 @@ export default function Page(){
    </div>
    <div className="top-actions"><a href="/audius" style={{color:"#d4b4ff",fontSize:12,fontWeight:800,textDecoration:"none",whiteSpace:"nowrap"}}>Audius Player ↗</a><button className="avatar" title="Profile and settings" aria-label="Open settings" onClick={()=>go("profile")}>S</button></div>
   </header>
-  <div className="scroll-content">
+  <div className="scroll-content" ref={scrollArea}>
    {screen==="home"&&<div className="spotibai-home-enter">
     <section className="welcome"><span className="eyebrow"><span className="pulse"/> YOUR PERSONAL SOUNDTRACK</span><h1>Music sounds better<br/><em>in your world.</em></h1><p>Search real music videos, save favorites, and build playlists that feel like you.</p><div className="welcome-actions"><button className="primary-button" onClick={()=>go("search")}><Search size={17}/> Find music</button><button className="subtle-button" onClick={()=>find("trending music 2026")}>Explore what's new <ArrowRight size={16}/></button></div><div className="hero-orb one"/><div className="hero-orb two"/><div className="hero-vinyl"><div className="vinyl-center"><Music2 size={35}/></div></div></section>
     <div className="section-title"><div><span className="section-kicker">PICK YOUR VIBE</span><h2>Explore something you'll love <span>✦</span></h2></div></div>
@@ -76,5 +81,6 @@ export default function Page(){
    <div className={"search-view-enter "+(screen==="home"||screen==="profile"?"spot-view-hidden":"") }><YouTubeMusic embedded initialQuery={submitted} initialSection={screen==="favorites"?"favorites":screen==="playlists"?"playlists":"discover"} createPlaylistSignal={newPlaylist} navigationSignal={navigationSignal}/></div>
   </div>
  </main>
+ {magic&&<div className="spot-magic-overlay" aria-hidden="true"><span>✦</span><span>✧</span><span>✦</span><span>✧</span><span>✦</span><span>✧</span></div>}
  </div>
 }
