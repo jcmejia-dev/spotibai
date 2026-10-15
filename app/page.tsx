@@ -2,9 +2,13 @@
 import {useEffect,useLayoutEffect,useRef,useState} from "react";
 import {ArrowLeft, ArrowRight, Disc3, Heart, Home, Library, ListMusic, Menu, Music2, Plus, Search, X, Settings2, Check, Clock3, Radio, Headphones, CassetteTape, SlidersHorizontal} from "lucide-react";
 import YouTubeMusic from "./youtube/page";
+import AuthGate from "./components/AuthGate";
+import {supabase} from "../lib/supabase";
+import type {User} from "@supabase/supabase-js";
 
 type Screen="home"|"search"|"favorites"|"playlists"|"profile";
-export default function Page(){
+export default function Page(){return <AuthGate>{user=><Spotibai key={user.id} user={user}/>}</AuthGate>}
+function Spotibai({user}:{user:User}){
  const [screen,setScreen]=useState<Screen>("home");
  const [query,setQuery]=useState("");
  const [suggestions,setSuggestions]=useState<{id:string;title:string;artist:string;thumbnail:string}[]>([]);
@@ -22,21 +26,22 @@ export default function Page(){
  const [drawer,setDrawer]=useState(false);
  const [newPlaylist,setNewPlaylist]=useState(0);
  const [navigationSignal,setNavigationSignal]=useState(0);
+ const storageKey=(key:string)=>"spotibai-user-"+user.id+"-"+key;
  const [mode,setMode]=useState("dark");
  const [accent,setAccent]=useState("#b28dff");
  const [motion,setMotion]=useState(true);
- useEffect(()=>{try{setMode(localStorage.getItem("spotibai-mode")||"dark");setAccent(localStorage.getItem("spotibai-accent")||"#b28dff");setMotion(localStorage.getItem("spotibai-motion")!=="false")}catch{}},[]);
- useEffect(()=>{try{setRecent(JSON.parse(localStorage.getItem("spotibai-recent-searches")||"[]"))}catch{}},[]);
+ useEffect(()=>{try{setMode((user.user_metadata?.spotibai_mode as string)||localStorage.getItem(storageKey("mode"))||"dark");setAccent((user.user_metadata?.spotibai_accent as string)||localStorage.getItem(storageKey("accent"))||"#b28dff");setMotion((user.user_metadata?.spotibai_motion as boolean|undefined)??localStorage.getItem(storageKey("motion"))!=="false")}catch{}},[]);
+ useEffect(()=>{try{setRecent(JSON.parse(localStorage.getItem(storageKey("recent-searches"))||"[]"))}catch{}},[]);
  useEffect(()=>{const onPointer=(event:PointerEvent)=>{if(searchBox.current&&!searchBox.current.contains(event.target as Node))setSuggestOpen(false)};document.addEventListener("pointerdown",onPointer);return()=>document.removeEventListener("pointerdown",onPointer)},[]);
  useEffect(()=>{const term=query.trim();if(!suggestOpen||term.length<3){setSuggestions([]);return}const key=term.toLowerCase();if(cache.current[key]){setSuggestions(cache.current[key]);return}if(lookupCount.current>=6){setSuggestions([]);return}const controller=new AbortController();const timer=setTimeout(async()=>{lookupCount.current++;setSuggestLoading(true);try{const response=await fetch("/api/youtube/search?q="+encodeURIComponent(term),{signal:controller.signal});if(!response.ok)throw Error("Search unavailable");const data=await response.json();const items=(data.items||[]).slice(0,6);cache.current[key]=items;setSuggestions(items)}catch(e){if(!controller.signal.aborted)setSuggestions([])}finally{if(!controller.signal.aborted)setSuggestLoading(false)}},1200);return()=>{clearTimeout(timer);controller.abort()}},[query,suggestOpen]);
  const applyAppearance=(change:()=>void)=>{const doc=document as Document&{startViewTransition?:(callback:()=>void)=>{ready:Promise<void>}};if(!motion||!doc.startViewTransition||matchMedia("(prefers-reduced-motion: reduce)").matches){change();return}const transition=doc.startViewTransition(change);void transition.ready.then(()=>{const radius=Math.hypot(innerWidth,innerHeight);document.documentElement.animate({clipPath:["circle(0px at 100% 0%)",`circle(${radius}px at 100% 0%)`]},{duration:700,easing:"cubic-bezier(.22,1,.36,1)",pseudoElement:"::view-transition-new(root)"})}).catch(()=>{})};
- const setTheme=(v:string)=>applyAppearance(()=>{setMode(v);localStorage.setItem("spotibai-mode",v)});
- const setColor=(v:string)=>applyAppearance(()=>{setAccent(v);localStorage.setItem("spotibai-accent",v)});
- const setAnimation=(v:boolean)=>{setMotion(v);localStorage.setItem("spotibai-motion",String(v))};
+ const setTheme=(v:string)=>applyAppearance(()=>{setMode(v);localStorage.setItem(storageKey("mode"),v);void supabase?.auth.updateUser({data:{spotibai_mode:v}})});
+ const setColor=(v:string)=>applyAppearance(()=>{setAccent(v);localStorage.setItem(storageKey("accent"),v);void supabase?.auth.updateUser({data:{spotibai_accent:v}})});
+ const setAnimation=(v:boolean)=>{setMotion(v);localStorage.setItem(storageKey("motion"),String(v));void supabase?.auth.updateUser({data:{spotibai_motion:v}})};
  const go=(screen:Screen)=>{setScreen(screen);setNavigationSignal(v=>v+1);setDrawer(false);scrollArea.current?.scrollTo({top:0,behavior:"instant"})};
  const decodeText=(value:string)=>value.replace(/&(?:#(\d+)|#x([0-9a-f]+)|amp|quot|apos|lt|gt);/gi,(full,dec,hex)=>{if(dec||hex){const point=parseInt(dec||hex,hex?16:10);return point>0&&point<=0x10ffff?String.fromCodePoint(point):full}return ({ "&amp;":"&","&quot;":"\"","&apos;":"\u0027","&lt;":"<","&gt;":">"} as Record<string,string>)[full.toLowerCase()]||full});
  const playSuggestion=(song:{id:string;title:string;artist:string;thumbnail:string})=>{setSuggestOpen(false);setSelectedSuggestion(-1);setQuery(decodeText(song.title));setSuggestPlay({...song,title:decodeText(song.title),artist:decodeText(song.artist),nonce:Date.now()});go("search")};
- const find=(q:string)=>{if(!q.trim())return;const term=q.trim();setQuery(term);setSubmitted(term);setSuggestOpen(false);setSelectedSuggestion(-1);const updated=[term,...recent.filter(x=>x.toLowerCase()!==term.toLowerCase())].slice(0,6);setRecent(updated);localStorage.setItem("spotibai-recent-searches",JSON.stringify(updated));go("search")};
+ const find=(q:string)=>{if(!q.trim())return;const term=q.trim();setQuery(term);setSubmitted(term);setSuggestOpen(false);setSelectedSuggestion(-1);const updated=[term,...recent.filter(x=>x.toLowerCase()!==term.toLowerCase())].slice(0,6);setRecent(updated);localStorage.setItem(storageKey("recent-searches"),JSON.stringify(updated));go("search")};
  useLayoutEffect(()=>{if(scrollArea.current)scrollArea.current.scrollTop=0},[screen]);
  const heading=(name:string)=>{find(name)};
  return <div className={"app spotibai-real theme-"+mode+(motion?"":" no-motion")} style={{"--accent":accent} as React.CSSProperties}>
@@ -65,7 +70,7 @@ export default function Page(){
      {query.trim()&&<button className="spot-suggest-all" onMouseDown={e=>e.preventDefault()} onClick={()=>find(query)}>Search for “{query.trim()}” <Search size={16}/></button>}
     </div>}
    </div>
-   <div className="top-actions"><button className="avatar" title="Profile and settings" aria-label="Open settings" onClick={()=>go("profile")}>S</button></div>
+   <div className="top-actions"><button className="avatar" title="Profile and settings" aria-label="Open settings" onClick={()=>go("profile")}>{(String(user.user_metadata?.display_name||user.email||"S"))[0].toUpperCase()}</button></div>
   </header>
   <div className="scroll-content" ref={scrollArea}>
    {screen==="home"&&<div className="spotibai-home-enter listening-room">
@@ -91,9 +96,9 @@ export default function Page(){
  <div className="studio-pref-row"><div className="studio-pref-label"><strong>Appearance</strong><span>Daylight or after dark</span></div><div className="studio-mode-switch"><button className={mode==="dark"?"active":""} onClick={()=>setTheme("dark")}>Night {mode==="dark"&&<Check size={14}/>}</button><button className={mode==="light"?"active":""} onClick={()=>setTheme("light")}>Daylight {mode==="light"&&<Check size={14}/>}</button></div></div>
  <div className="studio-pref-row"><div className="studio-pref-label"><strong>Room lighting</strong><span>Choose your signature color</span></div><div className="studio-swatches">{[["Violet","#b28dff"],["Coral","#f28ba8"],["Sage","#68c4ae"],["Sky","#7dabf4"],["Amber","#f3b86b"]].map(([name,value])=><button key={value} title={name} aria-label={name} aria-pressed={accent===value} className={accent===value?"active":""} onClick={()=>setColor(value)} style={{"--swatch":value} as React.CSSProperties}>{accent===value&&<Check size={15}/>}</button>)}<label className="studio-color-custom"><input type="color" aria-label="Custom room lighting color" value={accent} onChange={e=>setColor(e.target.value)}/></label></div></div>
  <div className="studio-pref-row"><div className="studio-pref-label"><strong>Motion</strong><span>Ambient movement and transitions</span></div><label className="studio-motion-toggle"><input type="checkbox" checked={motion} onChange={e=>setAnimation(e.target.checked)}/><span/></label></div>
- <div className="studio-settings-foot"><Music2 size={17}/> Preferences are saved in this browser.</div>
+ <button type="button" className="spot-signout" onClick={()=>void supabase?.auth.signOut()}>Sign out</button><div className="studio-settings-foot"><Music2 size={17}/> Appearance syncs with your account. Music collections are saved on this device.</div>
  </section>}
- <div className={"search-view-enter "+(screen==="home"||screen==="profile"?"spot-view-hidden":"") }><YouTubeMusic embedded initialQuery={submitted} initialSection={screen==="favorites"?"favorites":screen==="playlists"?"playlists":"discover"} createPlaylistSignal={newPlaylist} navigationSignal={navigationSignal} suggestedTrack={suggestPlay}/></div>
+ <div className={"search-view-enter "+(screen==="home"||screen==="profile"?"spot-view-hidden":"") }><YouTubeMusic userId={user.id} embedded initialQuery={submitted} initialSection={screen==="favorites"?"favorites":screen==="playlists"?"playlists":"discover"} createPlaylistSignal={newPlaylist} navigationSignal={navigationSignal} suggestedTrack={suggestPlay}/></div>
   </div>
  </main>
  </div>

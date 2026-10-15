@@ -4,11 +4,12 @@ import {ArrowLeft,Heart, ListMusic, Music2, Play, Plus, Search, Trash2, X, Youtu
 import "./youtube.css";
 
 type Song={id:string;title:string;artist:string;thumbnail:string};
-const FAVORITES="spotibai-youtube-favorites-v1";
-const PLAYLISTS="spotibai-youtube-playlists-v1";
+const FAVORITES="favorites-v1";
+const PLAYLISTS="playlists-v1";
 function load<T>(key:string,fallback:T):T {try{const value=localStorage.getItem(key);return value?JSON.parse(value) as T:fallback}catch{return fallback}}
 function decode(s:string){if(typeof document==="undefined")return s;const el=document.createElement("textarea");el.innerHTML=s;return el.value}
-export default function YouTubeMusic({embedded=false,initialQuery="",initialSection="discover",createPlaylistSignal=0,navigationSignal=0,suggestedTrack=null}:{embedded?:boolean;initialQuery?:string;initialSection?:string;createPlaylistSignal?:number;navigationSignal?:number;suggestedTrack?:({id:string;title:string;artist:string;thumbnail:string;nonce:number}|null)}){
+export default function YouTubeMusic({embedded=false,initialQuery="",initialSection="discover",createPlaylistSignal=0,navigationSignal=0,suggestedTrack=null,userId=""}:{userId?:string;embedded?:boolean;initialQuery?:string;initialSection?:string;createPlaylistSignal?:number;navigationSignal?:number;suggestedTrack?:({id:string;title:string;artist:string;thumbnail:string;nonce:number}|null)}){
+ const storageKey=(key:string)=>"spotibai-user-"+userId+"-"+key;
  const [q,setQ]=useState("");const [term,setTerm]=useState("");
  const [results,setResults]=useState<Song[]>([]);
  const [favorites,setFavorites]=useState<Song[]>([]);
@@ -28,12 +29,12 @@ export default function YouTubeMusic({embedded=false,initialQuery="",initialSect
  const notify=(message:string)=>{if(toastTimer.current)clearTimeout(toastTimer.current);setToast(message);toastTimer.current=setTimeout(()=>setToast(""),3200)};
  useEffect(()=>()=>{if(toastTimer.current)clearTimeout(toastTimer.current)},[]);
  useEffect(()=>{setWatchOpen(false);setMenu(null);setPlaylistDialog(false)},[navigationSignal]);
- useEffect(()=>{setFavorites(load(FAVORITES,[]));setPlaylists(load(PLAYLISTS,{}))},[]);
+ useEffect(()=>{setFavorites(load(storageKey(FAVORITES),[]));setPlaylists(load(storageKey(PLAYLISTS),{}))},[]);
  useEffect(()=>{if(initialQuery.trim()){setQ(initialQuery);search(initialQuery)}},[initialQuery]);
- useEffect(()=>{if(initialSection==="favorites")setSection("favorites");else if(initialSection==="playlists"){const list=Object.keys(load<Record<string,Song[]>>(PLAYLISTS,{}));setSection(list[0]||"playlists")}else setSection("discover")},[initialSection]);
+ useEffect(()=>{if(initialSection==="favorites")setSection("favorites");else if(initialSection==="playlists"){const list=Object.keys(load<Record<string,Song[]>>(storageKey(PLAYLISTS),{}));setSection(list[0]||"playlists")}else setSection("discover")},[initialSection]);
  useEffect(()=>{if(createPlaylistSignal>0)create()},[createPlaylistSignal]);
- const saveFav=(next:Song[])=>{setFavorites(next);localStorage.setItem(FAVORITES,JSON.stringify(next))};
- const saveLists=(next:Record<string,Song[]>)=>{setPlaylists(next);localStorage.setItem(PLAYLISTS,JSON.stringify(next))};
+ const saveFav=(next:Song[])=>{setFavorites(next);localStorage.setItem(storageKey(FAVORITES),JSON.stringify(next))};
+ const saveLists=(next:Record<string,Song[]>)=>{setPlaylists(next);localStorage.setItem(storageKey(PLAYLISTS),JSON.stringify(next))};
  const favorite=(song:Song)=>saveFav(favorites.some(s=>s.id===song.id)?favorites.filter(s=>s.id!==song.id):[song,...favorites]);
  const add=(name:string,song:Song)=>{const existing=playlists[name]||[];const duplicate=existing.some(s=>s.id===song.id);saveLists({...playlists,[name]:duplicate?existing:[...existing,song]});setMenu(null);notify(duplicate?"Already in “"+name+"”":"Added to “"+name+"”")};
  const create=()=>{setPlaylistDraft("");setPendingSong(null);setPlaylistDialog(true)};

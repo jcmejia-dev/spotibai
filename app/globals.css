@@ -256,3 +256,5 @@
  margin-top:22px;
  padding:14px 0 16px;
 }
+
+.spot-signout{margin-top:28px;background:transparent;border:1px solid var(--spot-border);color:var(--spot-text);padding:11px 18px;border-radius:10px;cursor:pointer}
