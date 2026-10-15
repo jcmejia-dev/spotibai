@@ -1,5 +1,5 @@
-import YouTubeMusic from "./youtube/page";
 "use client";
+import YouTubeMusic from "./youtube/page";
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Album, ArrowDownToLine, ArrowLeft, ArrowRight, Check, ChevronDown, Disc3, Heart, Home, Library, ListMusic, Menu, Mic2, MoreHorizontal, Music2, Pause, Play, Plus, Repeat2, Search, Shuffle, SkipBack, SkipForward, SlidersHorizontal, Sparkles, Upload, Volume2, VolumeX, X } from "lucide-react";
