@@ -32,7 +32,7 @@ export default function Page(){
   <header className="topbar">
    <div className="history"><button className="menu-toggle icon-button" onClick={()=>setDrawer(true)} aria-label="Open menu"><Menu size={21}/></button><button className="circle" onClick={()=>go("home")} aria-label="Go home"><ArrowLeft size={17}/></button><button className="circle" onClick={()=>go("search")} aria-label="Go to search"><ArrowRight size={17}/></button></div>
    <form className="searchbox" onSubmit={e=>{e.preventDefault();find(query.trim())}}><Search size={18}/><input aria-label="Search YouTube music" value={query} placeholder="Search for songs or artists..." onFocus={()=>go("search")} onChange={e=>setQuery(e.target.value)}/><button type="submit" className="top-search-submit" aria-label="Search"><Search size={16}/></button></form>
-   <div className="top-actions"><div className="avatar" title="Spotibai">S</div></div>
+   <div className="top-actions"><a href="/audius" style={{color:"#d4b4ff",fontSize:12,fontWeight:800,textDecoration:"none",whiteSpace:"nowrap"}}>Audius Player ↗</a><div className="avatar" title="Spotibai">S</div></div>
   </header>
   <div className="scroll-content">
    {screen==="home"&&<div className="spotibai-home-enter">
