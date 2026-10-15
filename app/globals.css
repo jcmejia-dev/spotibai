@@ -18,3 +18,17 @@
 @keyframes search-view-reveal{from{opacity:0;transform:translateY(13px)}to{opacity:1;transform:translateY(0)}}
 @keyframes search-result-reveal{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:translateY(0)}}
 @media(prefers-reduced-motion:reduce){.search-view-enter,.search-view-enter .yt-grid .yt-card{animation:none}.searchbox{transition:none}}
+
+/* Real catalog-only layout; no disconnected mock player. */
+.spotibai-real{padding-bottom:0}
+.spotibai-real .sidebar{height:100dvh}
+.spotibai-real .main{height:100dvh}
+.spotibai-real .scroll-content{padding-bottom:50px}
+.spotibai-home-enter{animation:search-view-reveal .4s ease both}
+.spotibai-library-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.spotibai-library-cards button{background:#221b2a;border:1px solid #42324e;color:#e9dcff;border-radius:14px;padding:22px;display:flex;flex-direction:column;gap:10px;align-items:flex-start;text-align:left;transition:background .2s,transform .2s}
+.spotibai-library-cards button:hover{background:#33243f;transform:translateY(-2px)}
+.spotibai-library-cards strong{font-size:17px}.spotibai-library-cards small{color:#b09cbd;font-size:12px}
+.spotibai-library-cards button>svg:last-child{align-self:flex-end}
+.spotibai-real .avatar{display:grid;place-items:center}
+@media(max-width:580px){.spotibai-library-cards{grid-template-columns:1fr}.spotibai-real .scroll-content{padding-bottom:25px}}

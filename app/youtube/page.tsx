@@ -8,7 +8,7 @@ const FAVORITES="spotibai-youtube-favorites-v1";
 const PLAYLISTS="spotibai-youtube-playlists-v1";
 function load<T>(key:string,fallback:T):T {try{const value=localStorage.getItem(key);return value?JSON.parse(value) as T:fallback}catch{return fallback}}
 function decode(s:string){if(typeof document==="undefined")return s;const el=document.createElement("textarea");el.innerHTML=s;return el.value}
-export default function YouTubeMusic({embedded=false,initialQuery=""}:{embedded?:boolean;initialQuery?:string}){
+export default function YouTubeMusic({embedded=false,initialQuery="",initialSection="discover",createPlaylistSignal=0}:{embedded?:boolean;initialQuery?:string;initialSection?:string;createPlaylistSignal?:number}){
  const [q,setQ]=useState("");const [term,setTerm]=useState("");
  const [results,setResults]=useState<Song[]>([]);
  const [favorites,setFavorites]=useState<Song[]>([]);
@@ -19,6 +19,8 @@ export default function YouTubeMusic({embedded=false,initialQuery=""}:{embedded?
  const [menu,setMenu]=useState<string|null>(null);
  useEffect(()=>{setFavorites(load(FAVORITES,[]));setPlaylists(load(PLAYLISTS,{}))},[]);
  useEffect(()=>{if(initialQuery.trim()){setQ(initialQuery);search(initialQuery)}},[initialQuery]);
+ useEffect(()=>{if(initialSection==="favorites")setSection("favorites");else if(initialSection==="playlists"){const list=Object.keys(load<Record<string,Song[]>>(PLAYLISTS,{}));setSection(list[0]||"favorites")}else setSection("discover")},[initialSection]);
+ useEffect(()=>{if(createPlaylistSignal>0)create()},[createPlaylistSignal]);
  const saveFav=(next:Song[])=>{setFavorites(next);localStorage.setItem(FAVORITES,JSON.stringify(next))};
  const saveLists=(next:Record<string,Song[]>)=>{setPlaylists(next);localStorage.setItem(PLAYLISTS,JSON.stringify(next))};
  const favorite=(song:Song)=>saveFav(favorites.some(s=>s.id===song.id)?favorites.filter(s=>s.id!==song.id):[song,...favorites]);
