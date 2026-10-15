@@ -49,3 +49,9 @@
 @keyframes spotibai-toast-in{from{opacity:0;transform:translate(-50%,12px)}to{opacity:1;transform:translate(-50%,0)}}
 @media(max-width:580px){.spotibai-toast{bottom:18px;font-size:12px}}
 @media(prefers-reduced-motion:reduce){.spotibai-toast{animation:none}}
+
+/* Persistent visible YouTube mini player while browsing collections. */
+.yt-watch-page.yt-watch-minimized{position:fixed;right:20px;bottom:20px;z-index:90;width:320px;max-width:calc(100vw - 24px);padding:0;border:1px solid #70518a;border-radius:14px;background:#201726;box-shadow:0 20px 75px #000b;overflow:hidden;animation:none}
+.yt-watch-minimized .yt-watch-layout{display:block}.yt-watch-minimized .yt-watch-main .yt-frame{border-radius:0;aspect-ratio:16/9;width:100%}.yt-watch-minimized .yt-watch-back,.yt-watch-minimized .yt-watch-main h1,.yt-watch-minimized .yt-watch-main>p,.yt-watch-minimized .yt-watch-actions,.yt-watch-minimized .yt-watch-next{display:none}
+.yt-mini-expand{border:0;background:#33233f;color:#e8d9f6;font-size:12px;font-weight:700;padding:10px 13px;width:100%;text-align:left}.yt-watch-page:not(.yt-watch-minimized) .yt-mini-expand{display:none}
+@media(max-width:580px){.yt-watch-page.yt-watch-minimized{right:10px;bottom:12px;width:260px}.yt-watch-minimized .yt-watch-main .yt-frame{min-height:146px}}
