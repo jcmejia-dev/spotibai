@@ -18,6 +18,7 @@ export default function Page(){
  const scrollArea=useRef<HTMLDivElement>(null);
 
  const [submitted,setSubmitted]=useState("");
+ const [suggestPlay,setSuggestPlay]=useState<{id:string;title:string;artist:string;thumbnail:string;nonce:number}|null>(null);
  const [drawer,setDrawer]=useState(false);
  const [newPlaylist,setNewPlaylist]=useState(0);
  const [navigationSignal,setNavigationSignal]=useState(0);
@@ -33,6 +34,8 @@ export default function Page(){
  const setColor=(v:string)=>applyAppearance(()=>{setAccent(v);localStorage.setItem("spotibai-accent",v)});
  const setAnimation=(v:boolean)=>{setMotion(v);localStorage.setItem("spotibai-motion",String(v))};
  const go=(screen:Screen)=>{setScreen(screen);setNavigationSignal(v=>v+1);setDrawer(false);scrollArea.current?.scrollTo({top:0,behavior:"instant"})};
+ const decodeText=(value:string)=>value.replace(/&(?:#(\d+)|#x([0-9a-f]+)|amp|quot|apos|lt|gt);/gi,(full,dec,hex)=>{if(dec||hex){const point=parseInt(dec||hex,hex?16:10);return point>0&&point<=0x10ffff?String.fromCodePoint(point):full}return ({ "&amp;":"&","&quot;":"\"","&apos;":"\u0027","&lt;":"<","&gt;":">"} as Record<string,string>)[full.toLowerCase()]||full});
+ const playSuggestion=(song:{id:string;title:string;artist:string;thumbnail:string})=>{setSuggestOpen(false);setSelectedSuggestion(-1);setQuery(decodeText(song.title));setSuggestPlay({...song,title:decodeText(song.title),artist:decodeText(song.artist),nonce:Date.now()});go("search")};
  const find=(q:string)=>{if(!q.trim())return;const term=q.trim();setQuery(term);setSubmitted(term);setSuggestOpen(false);setSelectedSuggestion(-1);const updated=[term,...recent.filter(x=>x.toLowerCase()!==term.toLowerCase())].slice(0,6);setRecent(updated);localStorage.setItem("spotibai-recent-searches",JSON.stringify(updated));go("search")};
  useLayoutEffect(()=>{if(scrollArea.current)scrollArea.current.scrollTop=0},[screen]);
  const heading=(name:string)=>{find(name)};
@@ -57,7 +60,7 @@ export default function Page(){
     <form className="searchbox" onSubmit={e=>{e.preventDefault();find(selectedSuggestion>=0&&suggestions[selectedSuggestion]?suggestions[selectedSuggestion].title:query)}}><Search size={18}/><input aria-label="Search YouTube music" value={query} placeholder="Search for songs or artists..." autoComplete="off" onFocus={()=>{setSuggestOpen(true);setSelectedSuggestion(-1);go("search")}} onChange={e=>{setQuery(e.target.value);setSelectedSuggestion(-1);setSuggestOpen(true)}} onKeyDown={e=>{if(e.key==="Escape"){setSuggestOpen(false);e.currentTarget.blur()}else if(e.key==="ArrowDown"){e.preventDefault();setSelectedSuggestion(v=>Math.min(v+1,suggestions.length-1))}else if(e.key==="ArrowUp"){e.preventDefault();setSelectedSuggestion(v=>Math.max(v-1,-1))}}}/><button type="submit" className="top-search-submit" aria-label="Search"><Search size={16}/></button></form>
     {suggestOpen&&(query.trim()||recent.length>0)&&<div className="spot-suggestions" role="listbox" aria-label="Music search suggestions">
      {query.trim().length>=3&&<div className="spot-suggest-heading">{suggestLoading?"Finding songs...":suggestions.length?"Suggested songs":lookupCount.current>=6?"Live suggestions limit reached — press Enter to search":"Search suggestions"}</div>}
-     {suggestions.map((song,i)=><button key={song.id} role="option" aria-selected={selectedSuggestion===i} className={selectedSuggestion===i?"highlight":""} onMouseDown={e=>e.preventDefault()} onClick={()=>find(song.title)}>{song.thumbnail?<img src={song.thumbnail} alt=""/>:<Music2 size={18}/>}<span><strong>{song.title}</strong><small>{song.artist}</small></span><Search size={15}/></button>)}
+     {suggestions.map((song,i)=><button key={song.id} role="option" aria-selected={selectedSuggestion===i} className={selectedSuggestion===i?"highlight":""} onMouseDown={e=>e.preventDefault()} onClick={()=>playSuggestion(song)}>{song.thumbnail?<img src={song.thumbnail} alt=""/>:<Music2 size={18}/>}<span><strong>{decodeText(song.title)}</strong><small>{decodeText(song.artist)}</small></span><Search size={15}/></button>)}
      {!query.trim()&&recent.length>0&&<><div className="spot-suggest-heading">Recent searches</div>{recent.map(item=><button key={item} onMouseDown={e=>e.preventDefault()} onClick={()=>find(item)}><Clock3 size={17}/><span><strong>{item}</strong></span><Search size={15}/></button>)}</>}
      {query.trim()&&<button className="spot-suggest-all" onMouseDown={e=>e.preventDefault()} onClick={()=>find(query)}>Search for “{query.trim()}” <Search size={16}/></button>}
     </div>}
@@ -90,7 +93,7 @@ export default function Page(){
  <div className="studio-pref-row"><div className="studio-pref-label"><strong>Motion</strong><span>Ambient movement and transitions</span></div><label className="studio-motion-toggle"><input type="checkbox" checked={motion} onChange={e=>setAnimation(e.target.checked)}/><span/></label></div>
  <div className="studio-settings-foot"><Music2 size={17}/> Preferences are saved in this browser.</div>
  </section>}
- <div className={"search-view-enter "+(screen==="home"||screen==="profile"?"spot-view-hidden":"") }><YouTubeMusic embedded initialQuery={submitted} initialSection={screen==="favorites"?"favorites":screen==="playlists"?"playlists":"discover"} createPlaylistSignal={newPlaylist} navigationSignal={navigationSignal}/></div>
+ <div className={"search-view-enter "+(screen==="home"||screen==="profile"?"spot-view-hidden":"") }><YouTubeMusic embedded initialQuery={submitted} initialSection={screen==="favorites"?"favorites":screen==="playlists"?"playlists":"discover"} createPlaylistSignal={newPlaylist} navigationSignal={navigationSignal} suggestedTrack={suggestPlay}/></div>
   </div>
  </main>
  </div>
