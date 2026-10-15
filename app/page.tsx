@@ -38,7 +38,7 @@ export default function Page(){
  const heading=(name:string)=>{find(name)};
  return <div className={"app spotibai-real theme-"+mode+(motion?"":" no-motion")} style={{"--accent":accent} as React.CSSProperties}>
  <aside className={"sidebar "+(drawer?"show":"")}>
-  <div className="brand"><span className="brand-icon"><Music2 size={23}/></span><span>spotibai<span className="brand-dot">.</span></span><button className="mobile-close icon-button" onClick={()=>setDrawer(false)} aria-label="Close menu"><X size={20}/></button></div>
+  <div className="brand"><img className="spotibai-logo-icon" src="/spotibai-icon.png" alt="Spotibai icon"/><span>spotibai<span className="brand-dot">.</span></span><button className="mobile-close icon-button" onClick={()=>setDrawer(false)} aria-label="Close menu"><X size={20}/></button></div>
   <div className="sidebar-heading">MENU</div>
   <nav className="nav">
    <button className={screen==="home"?"selected":""} onClick={()=>go("home")}><Home size={19}/> Home</button>
@@ -62,7 +62,7 @@ export default function Page(){
      {query.trim()&&<button className="spot-suggest-all" onMouseDown={e=>e.preventDefault()} onClick={()=>find(query)}>Search for “{query.trim()}” <Search size={16}/></button>}
     </div>}
    </div>
-   <div className="top-actions"><a href="/audius" style={{color:"#d4b4ff",fontSize:12,fontWeight:800,textDecoration:"none",whiteSpace:"nowrap"}}>Audius Player ↗</a><button className="avatar" title="Profile and settings" aria-label="Open settings" onClick={()=>go("profile")}>S</button></div>
+   <div className="top-actions"><button className="avatar" title="Profile and settings" aria-label="Open settings" onClick={()=>go("profile")}>S</button></div>
   </header>
   <div className="scroll-content" ref={scrollArea}>
    {screen==="home"&&<div className="spotibai-home-enter listening-room">
