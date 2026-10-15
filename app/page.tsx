@@ -16,8 +16,7 @@ export default function Page(){
  const cache=useRef<Record<string,{id:string;title:string;artist:string;thumbnail:string}[]>>({});
  const searchBox=useRef<HTMLDivElement>(null);
  const scrollArea=useRef<HTMLDivElement>(null);
- const magicTimer=useRef<ReturnType<typeof setTimeout>|null>(null);
- const [magic,setMagic]=useState(false);
+
  const [submitted,setSubmitted]=useState("");
  const [drawer,setDrawer]=useState(false);
  const [newPlaylist,setNewPlaylist]=useState(0);
@@ -29,10 +28,9 @@ export default function Page(){
  useEffect(()=>{try{setRecent(JSON.parse(localStorage.getItem("spotibai-recent-searches")||"[]"))}catch{}},[]);
  useEffect(()=>{const onPointer=(event:PointerEvent)=>{if(searchBox.current&&!searchBox.current.contains(event.target as Node))setSuggestOpen(false)};document.addEventListener("pointerdown",onPointer);return()=>document.removeEventListener("pointerdown",onPointer)},[]);
  useEffect(()=>{const term=query.trim();if(!suggestOpen||term.length<3){setSuggestions([]);return}const key=term.toLowerCase();if(cache.current[key]){setSuggestions(cache.current[key]);return}if(lookupCount.current>=6){setSuggestions([]);return}const controller=new AbortController();const timer=setTimeout(async()=>{lookupCount.current++;setSuggestLoading(true);try{const response=await fetch("/api/youtube/search?q="+encodeURIComponent(term),{signal:controller.signal});if(!response.ok)throw Error("Search unavailable");const data=await response.json();const items=(data.items||[]).slice(0,6);cache.current[key]=items;setSuggestions(items)}catch(e){if(!controller.signal.aborted)setSuggestions([])}finally{if(!controller.signal.aborted)setSuggestLoading(false)}},1200);return()=>{clearTimeout(timer);controller.abort()}},[query,suggestOpen]);
- const sparkle=()=>{if(!motion)return;setMagic(false);if(magicTimer.current)clearTimeout(magicTimer.current);requestAnimationFrame(()=>setMagic(true));magicTimer.current=setTimeout(()=>setMagic(false),800)};
- useEffect(()=>()=>{if(magicTimer.current)clearTimeout(magicTimer.current)},[]);
- const setTheme=(v:string)=>{setMode(v);localStorage.setItem("spotibai-mode",v);sparkle()};
- const setColor=(v:string)=>{setAccent(v);localStorage.setItem("spotibai-accent",v);sparkle()};
+ const applyAppearance=(change:()=>void)=>{const doc=document as Document&{startViewTransition?:(callback:()=>void)=>{ready:Promise<void>}};if(!motion||!doc.startViewTransition||matchMedia("(prefers-reduced-motion: reduce)").matches){change();return}const transition=doc.startViewTransition(change);void transition.ready.then(()=>{const radius=Math.hypot(innerWidth,innerHeight);document.documentElement.animate({clipPath:["circle(0px at 100% 0%)",`circle(${radius}px at 100% 0%)`]},{duration:700,easing:"cubic-bezier(.22,1,.36,1)",pseudoElement:"::view-transition-new(root)"})}).catch(()=>{})};
+ const setTheme=(v:string)=>applyAppearance(()=>{setMode(v);localStorage.setItem("spotibai-mode",v)});
+ const setColor=(v:string)=>applyAppearance(()=>{setAccent(v);localStorage.setItem("spotibai-accent",v)});
  const setAnimation=(v:boolean)=>{setMotion(v);localStorage.setItem("spotibai-motion",String(v))};
  const go=(screen:Screen)=>{setScreen(screen);setNavigationSignal(v=>v+1);setDrawer(false);scrollArea.current?.scrollTo({top:0,behavior:"instant"})};
  const find=(q:string)=>{if(!q.trim())return;const term=q.trim();setQuery(term);setSubmitted(term);setSuggestOpen(false);setSelectedSuggestion(-1);const updated=[term,...recent.filter(x=>x.toLowerCase()!==term.toLowerCase())].slice(0,6);setRecent(updated);localStorage.setItem("spotibai-recent-searches",JSON.stringify(updated));go("search")};
@@ -49,8 +47,6 @@ export default function Page(){
    <button className={screen==="playlists"?"selected":""} onClick={()=>go("playlists")}><ListMusic size={19}/> Playlists</button>
    <button className={screen==="profile"?"selected":""} onClick={()=>go("profile")}><Settings2 size={19}/> Profile & Settings</button>
   </nav>
-  <div className="sidebar-heading spaced">YOUR MUSIC</div>
-  <nav className="nav"><button onClick={()=>{setNewPlaylist(v=>v+1);go("playlists")}}><Plus size={19}/> Create playlist</button></nav>
   <div className="sidebar-bottom"><div className="side-promo"><span className="promo-spark"><Disc3 size={21}/></span><strong>Make it yours.</strong><p>Find music on YouTube, favorite the songs you enjoy, and build playlists.</p><button onClick={()=>go("search")}>Explore music <ArrowRight size={15}/></button></div><span className="sidebar-foot">Spotibai · Your sound, your space</span></div>
  </aside>
  {drawer&&<div className="mobile-shade" onClick={()=>setDrawer(false)}/>}
@@ -87,10 +83,15 @@ export default function Page(){
     </div>
     <footer className="room-footer"><Headphones size={17}/><span>GOOD MUSIC. GOOD COMPANY. NO RUSH.</span><Radio size={17}/></footer>
    </div>}
-   {screen==="profile"&&<section className="spot-settings search-view-enter"><span className="section-kicker">PERSONALIZE YOUR SPACE</span><h1>Profile & Settings</h1><p>Choose how Spotibai looks and feels. Your preferences are saved in this browser.</p><div className="spot-setting-card"><h2>Appearance</h2><div className="spot-choice"><button className={mode==="dark"?"active":""} onClick={()=>setTheme("dark")}>Dark mode {mode==="dark"&&<Check size={16}/>}</button><button className={mode==="light"?"active":""} onClick={()=>setTheme("light")}>Light mode {mode==="light"&&<Check size={16}/>}</button></div></div><div className="spot-setting-card"><h2>Accent color</h2><div className="spot-color-list">{["#b28dff","#f28ba8","#68c4ae","#7dabf4","#f3b86b"].map(value=><button key={value} aria-label={"Accent "+value} aria-pressed={accent===value} onClick={()=>setColor(value)} className={accent===value?"active":""} style={{background:value}}>{accent===value&&<Check size={18}/>}</button>)}<label className="spot-custom-color">Custom <input aria-label="Custom accent color" type="color" value={accent} onChange={e=>setColor(e.target.value)}/></label></div></div><div className="spot-setting-card"><h2>Animations</h2><label className="spot-motion"><input type="checkbox" checked={motion} onChange={e=>setAnimation(e.target.checked)}/> Smooth animations and transitions</label></div><p className="spot-account-note">Account sign-in and cross-device settings sync are not available yet.</p></section>}
-   <div className={"search-view-enter "+(screen==="home"||screen==="profile"?"spot-view-hidden":"") }><YouTubeMusic embedded initialQuery={submitted} initialSection={screen==="favorites"?"favorites":screen==="playlists"?"playlists":"discover"} createPlaylistSignal={newPlaylist} navigationSignal={navigationSignal}/></div>
+   {screen==="profile"&&<section className="spot-settings studio-preferences search-view-enter">
+ <div className="studio-settings-header"><div><span className="studio-eyebrow">SPOTIBAI / STUDIO SETTINGS</span><h1>Your space, your sound.</h1><p>Set the atmosphere of your listening room.</p></div><SlidersHorizontal size={27}/></div>
+ <div className="studio-pref-row"><div className="studio-pref-label"><strong>Appearance</strong><span>Daylight or after dark</span></div><div className="studio-mode-switch"><button className={mode==="dark"?"active":""} onClick={()=>setTheme("dark")}>Night {mode==="dark"&&<Check size={14}/>}</button><button className={mode==="light"?"active":""} onClick={()=>setTheme("light")}>Daylight {mode==="light"&&<Check size={14}/>}</button></div></div>
+ <div className="studio-pref-row"><div className="studio-pref-label"><strong>Room lighting</strong><span>Choose your signature color</span></div><div className="studio-swatches">{[["Violet","#b28dff"],["Coral","#f28ba8"],["Sage","#68c4ae"],["Sky","#7dabf4"],["Amber","#f3b86b"]].map(([name,value])=><button key={value} title={name} aria-label={name} aria-pressed={accent===value} className={accent===value?"active":""} onClick={()=>setColor(value)} style={{"--swatch":value} as React.CSSProperties}>{accent===value&&<Check size={15}/>}</button>)}<label className="studio-color-custom"><input type="color" aria-label="Custom room lighting color" value={accent} onChange={e=>setColor(e.target.value)}/></label></div></div>
+ <div className="studio-pref-row"><div className="studio-pref-label"><strong>Motion</strong><span>Ambient movement and transitions</span></div><label className="studio-motion-toggle"><input type="checkbox" checked={motion} onChange={e=>setAnimation(e.target.checked)}/><span/></label></div>
+ <div className="studio-settings-foot"><Music2 size={17}/> Preferences are saved in this browser.</div>
+ </section>}
+ <div className={"search-view-enter "+(screen==="home"||screen==="profile"?"spot-view-hidden":"") }><YouTubeMusic embedded initialQuery={submitted} initialSection={screen==="favorites"?"favorites":screen==="playlists"?"playlists":"discover"} createPlaylistSignal={newPlaylist} navigationSignal={navigationSignal}/></div>
   </div>
  </main>
- {magic&&<div className="spot-magic-overlay" aria-hidden="true"><span>✦</span><span>✧</span><span>✦</span><span>✧</span><span>✦</span><span>✧</span></div>}
  </div>
 }
