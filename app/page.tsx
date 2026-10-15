@@ -10,7 +10,8 @@ export default function Page(){
  const [submitted,setSubmitted]=useState("");
  const [drawer,setDrawer]=useState(false);
  const [newPlaylist,setNewPlaylist]=useState(0);
- const go=(screen:Screen)=>{setScreen(screen);setDrawer(false)};
+ const [navigationSignal,setNavigationSignal]=useState(0);
+ const go=(screen:Screen)=>{setScreen(screen);setNavigationSignal(v=>v+1);setDrawer(false)};
  const find=(q:string)=>{setQuery(q);setSubmitted(q);go("search")};
  const heading=(name:string)=>{find(name)};
  return <div className="app spotibai-real">
@@ -44,7 +45,7 @@ export default function Page(){
     <div className="section-title second"><div><span className="section-kicker">YOUR SPACE</span><h2>Your music, organized</h2></div></div>
     <div className="spotibai-library-cards"><button onClick={()=>go("favorites")}><Heart size={23}/><strong>Liked songs</strong><small>See all the songs you've favorited</small><ArrowRight size={17}/></button><button onClick={()=>go("playlists")}><ListMusic size={23}/><strong>Your playlists</strong><small>Pick up where you left off</small><ArrowRight size={17}/></button></div>
    </div>}
-   {screen!=="home"&&<div className="search-view-enter"><YouTubeMusic embedded initialQuery={submitted} initialSection={screen==="favorites"?"favorites":screen==="playlists"?"playlists":"discover"} createPlaylistSignal={newPlaylist}/></div>}
+   {screen!=="home"&&<div className="search-view-enter"><YouTubeMusic embedded initialQuery={submitted} initialSection={screen==="favorites"?"favorites":screen==="playlists"?"playlists":"discover"} createPlaylistSignal={newPlaylist} navigationSignal={navigationSignal}/></div>}
   </div>
  </main>
  </div>

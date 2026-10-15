@@ -1,6 +1,6 @@
 "use client";
-import {useEffect,useState} from "react";
-import {ArrowLeft,Heart, ListMusic, Music2, Play, Plus, Search, Trash2, X, Youtube} from "lucide-react";
+import {useEffect,useRef,useState} from "react";
+import {ArrowLeft,Heart, ListMusic, Music2, Play, Plus, Search, Trash2, X, Youtube, CheckCircle2} from "lucide-react";
 import "./youtube.css";
 
 type Song={id:string;title:string;artist:string;thumbnail:string};
@@ -8,7 +8,7 @@ const FAVORITES="spotibai-youtube-favorites-v1";
 const PLAYLISTS="spotibai-youtube-playlists-v1";
 function load<T>(key:string,fallback:T):T {try{const value=localStorage.getItem(key);return value?JSON.parse(value) as T:fallback}catch{return fallback}}
 function decode(s:string){if(typeof document==="undefined")return s;const el=document.createElement("textarea");el.innerHTML=s;return el.value}
-export default function YouTubeMusic({embedded=false,initialQuery="",initialSection="discover",createPlaylistSignal=0}:{embedded?:boolean;initialQuery?:string;initialSection?:string;createPlaylistSignal?:number}){
+export default function YouTubeMusic({embedded=false,initialQuery="",initialSection="discover",createPlaylistSignal=0,navigationSignal=0}:{embedded?:boolean;initialQuery?:string;initialSection?:string;createPlaylistSignal?:number;navigationSignal?:number}){
  const [q,setQ]=useState("");const [term,setTerm]=useState("");
  const [results,setResults]=useState<Song[]>([]);
  const [favorites,setFavorites]=useState<Song[]>([]);
@@ -20,6 +20,11 @@ export default function YouTubeMusic({embedded=false,initialQuery="",initialSect
  const [playlistDialog,setPlaylistDialog]=useState(false);
  const [playlistDraft,setPlaylistDraft]=useState("");
  const [pendingSong,setPendingSong]=useState<Song|null>(null);
+ const [toast,setToast]=useState("");
+ const toastTimer=useRef<ReturnType<typeof setTimeout>|null>(null);
+ const notify=(message:string)=>{if(toastTimer.current)clearTimeout(toastTimer.current);setToast(message);toastTimer.current=setTimeout(()=>setToast(""),3200)};
+ useEffect(()=>()=>{if(toastTimer.current)clearTimeout(toastTimer.current)},[]);
+ useEffect(()=>{setPlaying(null);setMenu(null);setPlaylistDialog(false)},[navigationSignal]);
  useEffect(()=>{setFavorites(load(FAVORITES,[]));setPlaylists(load(PLAYLISTS,{}))},[]);
  useEffect(()=>{if(initialQuery.trim()){setQ(initialQuery);search(initialQuery)}},[initialQuery]);
  useEffect(()=>{if(initialSection==="favorites")setSection("favorites");else if(initialSection==="playlists"){const list=Object.keys(load<Record<string,Song[]>>(PLAYLISTS,{}));setSection(list[0]||"playlists")}else setSection("discover")},[initialSection]);
@@ -27,12 +32,12 @@ export default function YouTubeMusic({embedded=false,initialQuery="",initialSect
  const saveFav=(next:Song[])=>{setFavorites(next);localStorage.setItem(FAVORITES,JSON.stringify(next))};
  const saveLists=(next:Record<string,Song[]>)=>{setPlaylists(next);localStorage.setItem(PLAYLISTS,JSON.stringify(next))};
  const favorite=(song:Song)=>saveFav(favorites.some(s=>s.id===song.id)?favorites.filter(s=>s.id!==song.id):[song,...favorites]);
- const add=(name:string,song:Song)=>{saveLists({...playlists,[name]:[...playlists[name].filter(s=>s.id!==song.id),song]});setMenu(null)};
+ const add=(name:string,song:Song)=>{const existing=playlists[name]||[];const duplicate=existing.some(s=>s.id===song.id);saveLists({...playlists,[name]:duplicate?existing:[...existing,song]});setMenu(null);notify(duplicate?"Already in “"+name+"”":"Added to “"+name+"”")};
  const create=()=>{setPlaylistDraft("");setPendingSong(null);setPlaylistDialog(true)};
- const confirmCreate=()=>{const trimmed=playlistDraft.trim().slice(0,60);if(!trimmed)return;const exists=Object.hasOwn(playlists,trimmed);if(pendingSong){const songs=playlists[trimmed]||[];saveLists({...playlists,[trimmed]:[...songs.filter(x=>x.id!==pendingSong.id),pendingSong]})}else if(!exists)saveLists({...playlists,[trimmed]:[]});setPlaylistDialog(false);setPendingSong(null);setMenu(null);setSection(trimmed)};
+ const confirmCreate=()=>{const trimmed=playlistDraft.trim().slice(0,60);if(!trimmed)return;const exists=Object.hasOwn(playlists,trimmed);if(pendingSong){const songs=playlists[trimmed]||[];saveLists({...playlists,[trimmed]:[...songs.filter(x=>x.id!==pendingSong.id),pendingSong]})}else if(!exists)saveLists({...playlists,[trimmed]:[]});setPlaylistDialog(false);setPendingSong(null);setMenu(null);setSection(trimmed);notify(exists?(pendingSong?"Song added to “"+trimmed+"”":"Opened “"+trimmed+"”"):(pendingSong?"Created “"+trimmed+"” and added song":"Playlist “"+trimmed+"” created"))};
  const search=async(query:string)=>{if(!query.trim())return;setTerm(query.trim());setLoading(true);setError("");setSection("discover");try{const res=await fetch("/api/youtube/search?q="+encodeURIComponent(query.trim()));const data=await res.json();if(!res.ok)throw Error(data.error||"Search failed");setResults(data.items||[])}catch(e){setError(e instanceof Error?e.message:"Search failed");setResults([])}finally{setLoading(false)}};
  const shown=section==="favorites"?favorites:section==="discover"?results:playlists[section]||[];
- const removePlaylist=()=>{if(!window.confirm("Delete this playlist?"))return;const next={...playlists};delete next[section];saveLists(next);setSection("discover")};
+ const removePlaylist=()=>{if(!window.confirm("Delete this playlist?"))return;const next={...playlists};delete next[section];saveLists(next);setSection("discover");notify("Playlist deleted")};
  return <div className={"yt-app "+(embedded?"yt-embedded":"")}>
   <aside className="yt-sidebar"><a className="yt-logo" href="/"><span>♪</span> spotibai.</a><a className="yt-back" href="/"><ArrowLeft size={17}/> Back to Spotibai</a><div className="yt-side-label">YOUTUBE DISCOVERY</div>
     <button className={section==="discover"?"yt-on":""} onClick={()=>setSection("discover")}><Search size={17}/> Search music</button>
@@ -55,6 +60,7 @@ export default function YouTubeMusic({embedded=false,initialQuery="",initialSect
     </div>
   </main>
   {false&&playing&&<div className="yt-modal-bg" onClick={()=>setPlaying(null)}><div className="yt-modal" onClick={e=>e.stopPropagation()}><div className="yt-modal-head"><div><strong>{decode(playing.title)}</strong><small>{decode(playing.artist)}</small></div><button onClick={()=>setPlaying(null)} aria-label="Close player"><X size={21}/></button></div><div className="yt-frame"><iframe src={"https://www.youtube.com/embed/"+encodeURIComponent(playing.id)+"?autoplay=1"} title={decode(playing.title)} allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen referrerPolicy="strict-origin-when-cross-origin"/></div><p>YouTube controls playback and availability. Some videos may disallow embedding.</p></div></div>}
+  {toast&&<div className="spotibai-toast" role="status" aria-live="polite"><CheckCircle2 size={19}/><span>{toast}</span><button onClick={()=>setToast("")} aria-label="Dismiss confirmation"><X size={15}/></button></div>}
   {playlistDialog&&<div className="spotibai-dialog-backdrop" onClick={()=>setPlaylistDialog(false)}><form className="spotibai-dialog" onClick={e=>e.stopPropagation()} onSubmit={e=>{e.preventDefault();confirmCreate()}}><div className="spotibai-dialog-icon"><ListMusic size={23}/></div><button type="button" className="spotibai-dialog-close" onClick={()=>setPlaylistDialog(false)} aria-label="Close"><X size={20}/></button><h2>Create a playlist</h2><p>Give your collection a name. You can add more songs anytime.</p><label htmlFor="spotibai-playlist-name">Playlist name</label><input id="spotibai-playlist-name" autoFocus maxLength={60} value={playlistDraft} onChange={e=>setPlaylistDraft(e.target.value)} placeholder="e.g. Late night favorites" required/><div className="spotibai-dialog-actions"><button type="button" onClick={()=>setPlaylistDialog(false)}>Cancel</button><button type="submit" disabled={!playlistDraft.trim()}>Create playlist</button></div></form></div>}
  </div>
 }
