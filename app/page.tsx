@@ -1,6 +1,6 @@
 "use client";
-import {useEffect,useRef,useState} from "react";
-import {ArrowLeft, ArrowRight, Disc3, Heart, Home, Library, ListMusic, Menu, Music2, Plus, Search, X, Settings2, Check, Clock3} from "lucide-react";
+import {useEffect,useLayoutEffect,useRef,useState} from "react";
+import {ArrowLeft, ArrowRight, Disc3, Heart, Home, Library, ListMusic, Menu, Music2, Plus, Search, X, Settings2, Check, Clock3, Radio, Headphones, CassetteTape, SlidersHorizontal} from "lucide-react";
 import YouTubeMusic from "./youtube/page";
 
 type Screen="home"|"search"|"favorites"|"playlists"|"profile";
@@ -36,6 +36,7 @@ export default function Page(){
  const setAnimation=(v:boolean)=>{setMotion(v);localStorage.setItem("spotibai-motion",String(v))};
  const go=(screen:Screen)=>{setScreen(screen);setNavigationSignal(v=>v+1);setDrawer(false);scrollArea.current?.scrollTo({top:0,behavior:"instant"})};
  const find=(q:string)=>{if(!q.trim())return;const term=q.trim();setQuery(term);setSubmitted(term);setSuggestOpen(false);setSelectedSuggestion(-1);const updated=[term,...recent.filter(x=>x.toLowerCase()!==term.toLowerCase())].slice(0,6);setRecent(updated);localStorage.setItem("spotibai-recent-searches",JSON.stringify(updated));go("search")};
+ useLayoutEffect(()=>{if(scrollArea.current)scrollArea.current.scrollTop=0},[screen]);
  const heading=(name:string)=>{find(name)};
  return <div className={"app spotibai-real theme-"+mode+(motion?"":" no-motion")} style={{"--accent":accent} as React.CSSProperties}>
  <aside className={"sidebar "+(drawer?"show":"")}>
@@ -68,14 +69,23 @@ export default function Page(){
    <div className="top-actions"><a href="/audius" style={{color:"#d4b4ff",fontSize:12,fontWeight:800,textDecoration:"none",whiteSpace:"nowrap"}}>Audius Player ↗</a><button className="avatar" title="Profile and settings" aria-label="Open settings" onClick={()=>go("profile")}>S</button></div>
   </header>
   <div className="scroll-content" ref={scrollArea}>
-   {screen==="home"&&<div className="spotibai-home-enter">
-    <section className="welcome"><span className="eyebrow"><span className="pulse"/> YOUR PERSONAL SOUNDTRACK</span><h1>Music sounds better<br/><em>in your world.</em></h1><p>Search real music videos, save favorites, and build playlists that feel like you.</p><div className="welcome-actions"><button className="primary-button" onClick={()=>go("search")}><Search size={17}/> Find music</button><button className="subtle-button" onClick={()=>find("trending music 2026")}>Explore what's new <ArrowRight size={16}/></button></div><div className="hero-orb one"/><div className="hero-orb two"/><div className="hero-vinyl"><div className="vinyl-center"><Music2 size={35}/></div></div></section>
-    <div className="section-title"><div><span className="section-kicker">PICK YOUR VIBE</span><h2>Explore something you'll love <span>✦</span></h2></div></div>
-    <div className="mood-grid">
-    {[{name:"Late Night",subtitle:"Slow down & unwind",term:"late night chill songs",cover:"https://images.unsplash.com/photo-1519608487953-e999c86e7455?w=700&q=85",tint:"purple"},{name:"Good Energy",subtitle:"Turn the volume up",term:"feel good pop songs",cover:"https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=700&q=85",tint:"amber"},{name:"Deep Focus",subtitle:"Stay in your zone",term:"lofi study music",cover:"https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=700&q=85",tint:"blue"},{name:"On Repeat",subtitle:"Discover popular tracks",term:"popular music 2026",cover:"https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=700&q=85",tint:"rose"}].map(item=><button key={item.name} className={"mood-card "+item.tint} onClick={()=>heading(item.term)}><img src={item.cover} alt=""/><span className="mood-scrim"/><span className="mood-copy"><strong>{item.name}</strong><small>{item.subtitle}</small></span><span className="mood-arrow"><ArrowRight size={17}/></span></button>)}
+   {screen==="home"&&<div className="spotibai-home-enter listening-room">
+    <section className="room-stage">
+      <div className="room-light"/>
+      <div className="room-intro"><div className="room-kicker"><span className="room-led"/> SPOTIBAI / LISTENING ROOM <span className="room-issue">VOL. 001</span></div><h1>Your room.<br/><em>Your soundtrack.</em></h1><p>Drop the needle. Find your next favorite and keep a little music in the room.</p><div className="room-intro-actions"><button onClick={()=>go("search")}><Search size={17}/> Find a record <ArrowRight size={16}/></button><button onClick={()=>go("playlists")}><ListMusic size={17}/> Open your collection</button></div></div>
+      <div className="room-console" aria-hidden="true"><div className="room-plinth"><div className="room-turntable"><div className="room-record"><div className="room-record-label"><Music2 size={27}/></div></div><div className="room-arm"><div className="room-arm-joint"/><div className="room-arm-stick"/><div className="room-cartridge"/></div><div className="room-control-knob"/></div><div className="room-console-footer"><span>SPOTIBAI HI-FI</span><span>33⅓ RPM • STEREO</span><div className="room-tiny-light"/></div></div></div>
+      <div className="room-ground-line"/>
+    </section>
+    <div className="room-section-heading"><div><span className="room-overline">THE RECORD CRATE</span><h2>Pick a mood, press play.</h2></div><button onClick={()=>go("search")}>Browse music <ArrowRight size={16}/></button></div>
+    <div className="room-crates">
+      {[{name:"AFTER HOURS",subtitle:"Quiet streets, loud thoughts",term:"late night chill r&b music",color:"violet",symbol:"01"},{name:"LOUD & CLEAR",subtitle:"Turn the room up",term:"hip hop hits music",color:"orange",symbol:"02"},{name:"SLOW MOTION",subtitle:"A little breathing room",term:"lofi mellow chill music",color:"blue",symbol:"03"},{name:"ON REPEAT",subtitle:"The one you never skip",term:"popular songs playlist",color:"lime",symbol:"04"}].map(item=><button className={"room-crate "+item.color} key={item.name} onClick={()=>heading(item.term)}><span className="room-crate-top"><span>SPOTIBAI SELECTS</span><span>{item.symbol} / 04</span></span><span className="room-crate-groove"/><span className="room-crate-bottom"><strong>{item.name}</strong><small>{item.subtitle}</small><ArrowRight size={18}/></span></button>)}
     </div>
-    <div className="section-title second"><div><span className="section-kicker">YOUR SPACE</span><h2>Your music, organized</h2></div></div>
-    <div className="spotibai-library-cards"><button onClick={()=>go("favorites")}><Heart size={23}/><strong>Liked songs</strong><small>See all the songs you've favorited</small><ArrowRight size={17}/></button><button onClick={()=>go("playlists")}><ListMusic size={23}/><strong>Your playlists</strong><small>Pick up where you left off</small><ArrowRight size={17}/></button></div>
+    <div className="room-section-heading"><div><span className="room-overline">YOUR OWN CORNER</span><h2>On your shelf.</h2></div></div>
+    <div className="room-shelf">
+      <button className="room-shelf-item" onClick={()=>go("favorites")}><span className="room-shelf-art heart"><Heart size={31}/></span><span><small>THE KEEPSAKES</small><strong>Liked records</strong><span>Everything worth keeping close.</span></span><ArrowRight size={19}/></button>
+      <button className="room-shelf-item" onClick={()=>go("playlists")}><span className="room-shelf-art tapes"><CassetteTape size={35}/></span><span><small>THE MIXTAPES</small><strong>Your playlists</strong><span>Handpicked, side A to side B.</span></span><ArrowRight size={19}/></button>
+    </div>
+    <footer className="room-footer"><Headphones size={17}/><span>GOOD MUSIC. GOOD COMPANY. NO RUSH.</span><Radio size={17}/></footer>
    </div>}
    {screen==="profile"&&<section className="spot-settings search-view-enter"><span className="section-kicker">PERSONALIZE YOUR SPACE</span><h1>Profile & Settings</h1><p>Choose how Spotibai looks and feels. Your preferences are saved in this browser.</p><div className="spot-setting-card"><h2>Appearance</h2><div className="spot-choice"><button className={mode==="dark"?"active":""} onClick={()=>setTheme("dark")}>Dark mode {mode==="dark"&&<Check size={16}/>}</button><button className={mode==="light"?"active":""} onClick={()=>setTheme("light")}>Light mode {mode==="light"&&<Check size={16}/>}</button></div></div><div className="spot-setting-card"><h2>Accent color</h2><div className="spot-color-list">{["#b28dff","#f28ba8","#68c4ae","#7dabf4","#f3b86b"].map(value=><button key={value} aria-label={"Accent "+value} aria-pressed={accent===value} onClick={()=>setColor(value)} className={accent===value?"active":""} style={{background:value}}>{accent===value&&<Check size={18}/>}</button>)}<label className="spot-custom-color">Custom <input aria-label="Custom accent color" type="color" value={accent} onChange={e=>setColor(e.target.value)}/></label></div></div><div className="spot-setting-card"><h2>Animations</h2><label className="spot-motion"><input type="checkbox" checked={motion} onChange={e=>setAnimation(e.target.checked)}/> Smooth animations and transitions</label></div><p className="spot-account-note">Account sign-in and cross-device settings sync are not available yet.</p></section>}
    <div className={"search-view-enter "+(screen==="home"||screen==="profile"?"spot-view-hidden":"") }><YouTubeMusic embedded initialQuery={submitted} initialSection={screen==="favorites"?"favorites":screen==="playlists"?"playlists":"discover"} createPlaylistSignal={newPlaylist} navigationSignal={navigationSignal}/></div>
