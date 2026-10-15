@@ -32,3 +32,14 @@
 .spotibai-library-cards button>svg:last-child{align-self:flex-end}
 .spotibai-real .avatar{display:grid;place-items:center}
 @media(max-width:580px){.spotibai-library-cards{grid-template-columns:1fr}.spotibai-real .scroll-content{padding-bottom:25px}}
+
+@media(max-width:580px){
+ .spotibai-real{width:100%;overflow:hidden}
+ .spotibai-real .main{min-width:0;width:100%}
+ .spotibai-real .topbar{gap:9px;padding:0 12px}
+ .spotibai-real .searchbox{flex:1;min-width:0;max-width:none}
+ .spotibai-real .searchbox input{font-size:12px}
+ .spotibai-real .top-actions{margin-left:0}
+ .spotibai-real .scroll-content{overflow-x:hidden;padding:0 13px 25px}
+ .spotibai-real .search-view-enter{min-width:0;width:100%}
+}
