@@ -57,3 +57,41 @@
 @media(max-width:580px){.yt-watch-page.yt-watch-minimized{right:10px;bottom:12px;width:260px}.yt-watch-minimized .yt-watch-main .yt-frame{min-height:146px}}
 
 .spot-yt-host,.spot-yt-host iframe{width:100%;height:100%;min-height:100%;display:block;border:0}
+
+/* Compact integrated playback dock replaces the large floating video window.
+   Keep YouTube's player visible and unaltered while active. */
+.yt-watch-page.yt-watch-minimized{
+ position:fixed!important;
+ inset:auto 0 0 0!important;
+ width:100%!important;
+ max-width:none!important;
+ z-index:90;
+ height:91px;
+ border:0!important;
+ border-top:1px solid var(--spot-border,#564167)!important;
+ border-radius:0!important;
+ box-shadow:0 -8px 32px #0005!important;
+ background:var(--spot-surface,#201726)!important;
+ padding:0 25px!important;
+ display:flex;
+ align-items:center;
+}
+.yt-watch-minimized .yt-watch-layout{display:flex!important;align-items:center;width:100%;gap:16px}
+.yt-watch-minimized .yt-watch-main{width:100%;display:flex;align-items:center;gap:16px;min-width:0}
+.yt-watch-minimized .yt-watch-main .yt-frame{height:72px!important;width:128px!important;min-width:128px;min-height:72px!important;aspect-ratio:16/9;border-radius:8px!important;overflow:hidden}
+.yt-watch-minimized .spot-yt-host,.yt-watch-minimized .spot-yt-host iframe{height:72px!important;min-height:72px!important}
+.yt-watch-minimized .yt-mini-expand{
+ display:flex!important;justify-content:space-between;gap:16px;align-items:center;flex:1;text-align:left;
+ background:none!important;padding:8px!important;min-width:0;
+}
+.yt-dock-title{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:700}
+.yt-dock-title small{display:block;font-size:11px;color:var(--spot-muted,#b9a6c5);font-weight:400;margin-top:5px;overflow:hidden;text-overflow:ellipsis}
+.yt-dock-open{font-size:12px;font-weight:700;color:var(--accent,#b28dff);white-space:nowrap}
+.yt-watch-page:not(.yt-watch-minimized) .yt-mini-expand{display:none!important}
+@media(max-width:580px){
+ .yt-watch-page.yt-watch-minimized{height:79px;padding:0 10px!important}
+ .yt-watch-minimized .yt-watch-main{gap:9px}
+ .yt-watch-minimized .yt-watch-main .yt-frame{width:102px!important;min-width:102px;height:58px!important;min-height:58px!important}
+ .yt-watch-minimized .spot-yt-host,.yt-watch-minimized .spot-yt-host iframe{height:58px!important;min-height:58px!important}
+ .yt-dock-title{font-size:11px}.yt-dock-open{font-size:10px}
+}
