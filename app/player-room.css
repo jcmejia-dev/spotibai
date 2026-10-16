@@ -64,3 +64,11 @@
  .yt-player-room .yt-watch-next .yt-queue-index{display:block}
 }
 @media(prefers-reduced-motion:reduce){.yt-return-to-player{transition:none}}
+
+/* Remove the duplicate mini-player strip while preserving the listening room. */
+.spotibai-real .yt-player-room.yt-player-paused-hidden{display:none!important}
+.spotibai-real .yt-mini-expand,.spotibai-real .yt-return-to-player{display:none!important}
+.spotibai-real .top-actions .spot-resume-player-button{height:35px;width:35px;flex:none;display:grid;place-items:center;border:1px solid var(--spot-border);border-radius:50%;background:var(--spot-surface-2);color:var(--accent);cursor:pointer;transition:background .15s,border-color .15s}
+.spotibai-real .top-actions .spot-resume-player-button:hover{background:var(--spot-wash);border-color:var(--accent)}
+.spotibai-real .top-actions{display:flex;align-items:center;gap:10px}
+@media(max-width:900px){.spotibai-real .top-actions .spot-resume-player-button{height:33px;width:33px}}

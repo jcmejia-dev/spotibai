@@ -32,6 +32,7 @@ function Spotibai({user,exitGuest}:{user:User;exitGuest:()=>void}){
  const [drawer,setDrawer]=useState(false);
  const [newPlaylist,setNewPlaylist]=useState(0);
  const [navigationSignal,setNavigationSignal]=useState(0);
+ const [restorePlayerSignal,setRestorePlayerSignal]=useState(0);
  const storageKey=(key:string)=>"spotibai-user-"+user.id+"-"+key;
  const [mode,setMode]=useState("dark");
  const [accent,setAccent]=useState("#b28dff");
@@ -78,7 +79,7 @@ function Spotibai({user,exitGuest}:{user:User;exitGuest:()=>void}){
      {query.trim()&&<button className="spot-suggest-all" onMouseDown={e=>e.preventDefault()} onClick={()=>find(query)}>Search for “{query.trim()}” <Search size={16}/></button>}
     </div>}
    </div>
-   <div className="top-actions"><button className="avatar" title="Profile and settings" aria-label="Open settings" onClick={()=>go("profile")}>{(String(user.name||user.email||"S"))[0].toUpperCase()}</button></div>
+   <div className="top-actions">{currentTrack&&<button className="spot-resume-player-button" aria-label={"Return to player: "+currentTrack.title} title={"Return to player: "+currentTrack.title} onClick={()=>{go("search");setRestorePlayerSignal(value=>value+1)}}><Music2 size={18}/></button>}<button className="avatar" title="Profile and settings" aria-label="Open settings" onClick={()=>go("profile")}>{(String(user.name||user.email||"S"))[0].toUpperCase()}</button></div>
   </header>
   <div className="scroll-content" ref={scrollArea}>
    {!online&&<div className="spot-connection-notice" role="status"><WifiOff size={16}/> Offline now — your saved collection and on-device audio remain available. Streaming and search need an internet connection. <button onClick={()=>go("offline")}>Open offline library →</button></div>}
@@ -92,7 +93,7 @@ function Spotibai({user,exitGuest}:{user:User;exitGuest:()=>void}){
  <div className="spot-identity-bar"><span>{user.isGuest?"Browsing as Guest":`Signed in as ${user.name||user.email}`}</span><span>{online?"● Online":"○ Offline"}</span></div>
  <button type="button" className="spot-signout" onClick={()=>user.isGuest?exitGuest():void authClient.signOut()}>{user.isGuest?"Sign in / Create account":"Sign out"}</button><div className="studio-settings-foot"><Music2 size={17}/> Preferences and music collections are saved on this device. Guest data stays separate from account data.</div>
  </section>}
- <div className={"search-view-enter "+(screen==="home"||screen==="profile"||screen==="offline"?"spot-view-hidden":"") }><YouTubeMusic userId={user.id} onTrackChange={setCurrentTrack} onOpenOffline={()=>go("offline")} embedded initialQuery={submitted} initialSection={screen==="favorites"?"favorites":screen==="playlists"?"playlists":"discover"} createPlaylistSignal={newPlaylist} navigationSignal={navigationSignal} suggestedTrack={suggestPlay}/></div>
+ <div className={"search-view-enter "+(screen==="home"||screen==="profile"||screen==="offline"?"spot-view-hidden":"") }><YouTubeMusic userId={user.id} restorePlayerSignal={restorePlayerSignal} onTrackChange={setCurrentTrack} onOpenOffline={()=>go("offline")} embedded initialQuery={submitted} initialSection={screen==="favorites"?"favorites":screen==="playlists"?"playlists":"discover"} createPlaylistSignal={newPlaylist} navigationSignal={navigationSignal} suggestedTrack={suggestPlay}/></div>
   </div>
  </main>
  <nav className="spot-mobile-tabs" aria-label="Primary navigation">

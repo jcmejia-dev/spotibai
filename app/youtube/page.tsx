@@ -1,6 +1,6 @@
 "use client";
 import {useEffect,useRef,useState} from "react";
-import {ArrowLeft,Heart, ListMusic, Music2, Play, Plus, Search, Trash2, X, Youtube, CheckCircle2, Download, ArrowUpRight, Disc3, ListOrdered, ChevronDown} from "lucide-react";
+import {ArrowLeft,Heart, ListMusic, Music2, Play, Plus, Search, Trash2, X, Youtube, CheckCircle2, Download, Disc3, ListOrdered, ChevronDown} from "lucide-react";
 import "./youtube.css";
 
 type Song={id:string;title:string;artist:string;thumbnail:string};
@@ -8,7 +8,7 @@ const FAVORITES="favorites-v1";
 const PLAYLISTS="playlists-v1";
 function load<T>(key:string,fallback:T):T {try{const value=localStorage.getItem(key);return value?JSON.parse(value) as T:fallback}catch{return fallback}}
 function decode(s:string){if(typeof document==="undefined")return s;const el=document.createElement("textarea");el.innerHTML=s;return el.value}
-export default function YouTubeMusic({embedded=false,initialQuery="",initialSection="discover",createPlaylistSignal=0,navigationSignal=0,suggestedTrack=null,userId="",onOpenOffline,onTrackChange}:{onTrackChange?:(track:{id:string;title:string;artist:string}|null)=>void;onOpenOffline?:()=>void;userId?:string;embedded?:boolean;initialQuery?:string;initialSection?:string;createPlaylistSignal?:number;navigationSignal?:number;suggestedTrack?:({id:string;title:string;artist:string;thumbnail:string;nonce:number}|null)}){
+export default function YouTubeMusic({embedded=false,initialQuery="",initialSection="discover",createPlaylistSignal=0,navigationSignal=0,restorePlayerSignal=0,suggestedTrack=null,userId="",onOpenOffline,onTrackChange}:{onTrackChange?:(track:{id:string;title:string;artist:string}|null)=>void;onOpenOffline?:()=>void;userId?:string;embedded?:boolean;initialQuery?:string;initialSection?:string;createPlaylistSignal?:number;navigationSignal?:number;restorePlayerSignal?:number;suggestedTrack?:({id:string;title:string;artist:string;thumbnail:string;nonce:number}|null)}){
  const storageKey=(key:string)=>"spotibai-user-"+userId+"-"+key;
  const [q,setQ]=useState("");const [term,setTerm]=useState("");
  const [results,setResults]=useState<Song[]>([]);
@@ -35,6 +35,7 @@ export default function YouTubeMusic({embedded=false,initialQuery="",initialSect
  const notify=(message:string)=>{if(toastTimer.current)clearTimeout(toastTimer.current);setToast(message);toastTimer.current=setTimeout(()=>setToast(""),3200)};
  useEffect(()=>()=>{if(toastTimer.current)clearTimeout(toastTimer.current)},[]);
  useEffect(()=>{setWatchOpen(false);setMenu(null);setPlaylistDialog(false)},[navigationSignal]);
+ useEffect(()=>{if(restorePlayerSignal>0&&playing)setWatchOpen(true)},[restorePlayerSignal]);
  useEffect(()=>{setFavorites(load(storageKey(FAVORITES),[]));setPlaylists(load(storageKey(PLAYLISTS),{}));setResults(load(storageKey("last-results"),[]));setTerm(load(storageKey("last-query"),""));setNextPageToken(load(storageKey("next-page-token"),null))},[userId]);
  useEffect(()=>{if(initialQuery.trim()){setQ(initialQuery);search(initialQuery)}},[initialQuery]);
  useEffect(()=>{if(initialSection==="favorites")setSection("favorites");else if(initialSection==="playlists"){const list=Object.keys(load<Record<string,Song[]>>(storageKey(PLAYLISTS),{}));setSection(list[0]||"playlists")}else setSection("discover")},[initialSection]);
@@ -136,7 +137,7 @@ export default function YouTubeMusic({embedded=false,initialQuery="",initialSect
   <main className="yt-main">
     <header className="yt-top"><a href="/" className="yt-mobile-back"><ArrowLeft size={20}/></a><span className="yt-tag"><Youtube size={17}/> YouTube Music Discovery</span><a href="/" className="yt-top-home">Spotibai home ↗</a></header>
     <div className="yt-content">
-    {playing&&<div className={"yt-watch-page yt-player-room "+(watchOpen?"":"yt-watch-minimized")}>
+    {playing&&<div className={"yt-watch-page yt-player-room "+(watchOpen?"":"yt-player-paused-hidden")}>
       <div className="yt-player-head">
        <button className="yt-watch-back" onClick={()=>setWatchOpen(false)} title="Return to your collection" aria-label="Back to music collection"><ArrowLeft size={21}/><span>Back to your music</span></button>
        <div className="yt-player-now"><span className="yt-player-onair"><span/> ON AIR / SPOTIBAI</span><strong title={decode(playing.title)}>{decode(playing.title)}</strong></div>
@@ -144,10 +145,7 @@ export default function YouTubeMusic({embedded=false,initialQuery="",initialSect
       </div>
       <div className="yt-watch-layout">
         <div className="yt-watch-main">
-          <div className="yt-frame"><YouTubeVideo videoId={playing.id} title={decode(playing.title)} onEnded={nextInQueue}/></div>
-          <button className="yt-mini-expand" onClick={()=>setWatchOpen(true)} aria-label={"Open player for "+decode(playing.title)}>
-             <span className="yt-dock-title">{decode(playing.title)}<small>{decode(playing.artist)}</small></span><span className="yt-dock-open">Open player <ArrowUpRight size={16}/></span>
-          </button>
+          <div className="yt-frame"><YouTubeVideo videoId={playing.id} title={decode(playing.title)} active={watchOpen} onEnded={nextInQueue}/></div>
           <div className="yt-player-track-meta">
            <div className="yt-track-disc"><Disc3 size={20}/></div>
            <div><span className="yt-player-meta-label">CURRENTLY SPINNING</span><h1>{decode(playing.title)}</h1><p>{decode(playing.artist)}</p></div>
@@ -169,7 +167,6 @@ export default function YouTubeMusic({embedded=false,initialQuery="",initialSect
       </div>
     </div>}
     {!watchOpen&&<>
-    {playing&&<button className="yt-return-to-player" onClick={()=>setWatchOpen(true)}><span className="yt-return-pulse"/><span><small>NOW PLAYING</small><strong>{decode(playing.title)}</strong></span><span className="yt-return-call">Return to player <ArrowUpRight size={17}/></span></button>}
     {embedded&&<div className="yt-embedded-tabs"><button className={section==="discover"?"active":""} onClick={()=>setSection("discover")}><Search size={16}/> Search</button><button className={section==="favorites"?"active":""} onClick={()=>setSection("favorites")}><Heart size={16}/> Favorites ({favorites.length})</button>{Object.keys(playlists).map(name=><button className={section===name?"active":""} key={name} onClick={()=>setSection(name)}><ListMusic size={16}/>{name}</button>)}<button onClick={create}><Plus size={16}/> New playlist</button></div>}
     <div className="yt-heading yt-editorial-heading"><div><p>THE LISTENING DESK / SPOTIBAI</p><h1>{section==="discover"?"Find the sound. Keep the feeling.":section==="favorites"?"The songs you keep.":section==="playlists"?"Your mixtape shelf.":section}</h1><span>{section==="discover"?"Search across YouTube music videos, then organize what belongs on your shelf.":section==="favorites"?"Your handpicked favorites, ready whenever you return.":section==="playlists"?"Create and name your own mixtapes.":"Your collection, arranged your way."}</span></div>{section!=="discover"&&section!=="favorites"&&section!=="playlists"&&<button className="yt-delete" onClick={removePlaylist}><Trash2 size={17}/> Delete playlist</button>}</div>
     {!embedded&&<form className="yt-search-form" onSubmit={e=>{e.preventDefault();search(q)}}><Search size={19}/><input value={q} onChange={e=>setQ(e.target.value)} placeholder="Search for songs, artists, or music videos..." aria-label="Search YouTube music"/><button type="submit" disabled={loading}>{loading?"Searching...":"Search"}</button></form>}
@@ -187,7 +184,7 @@ export default function YouTubeMusic({embedded=false,initialQuery="",initialSect
  </div>
 }
 
-type YTPlayer={destroy:()=>void};
+type YTPlayer={destroy:()=>void;pauseVideo:()=>void;playVideo:()=>void};
 type YTNamespace={Player:new (element:HTMLElement,options:{videoId:string;playerVars:Record<string,number>;events:{onReady?:(event:unknown)=>void;onStateChange:(event:{data:number})=>void;onError:(event:{data:number})=>void}})=>YTPlayer};
 declare global{interface Window{YT?:YTNamespace;onYouTubeIframeAPIReady?:()=>void}}
 let youtubeReady:Promise<YTNamespace>|undefined;
@@ -203,18 +200,22 @@ function getYouTubeAPI():Promise<YTNamespace>{
  });
  return youtubeReady;
 }
-function YouTubeVideo({videoId,title,onEnded}:{videoId:string;title:string;onEnded:()=>void}){
+function YouTubeVideo({videoId,title,active,onEnded}:{videoId:string;title:string;active:boolean;onEnded:()=>void}){
  const host=useRef<HTMLDivElement>(null);
  const ended=useRef(onEnded);
+ const playerRef=useRef<YTPlayer|null>(null);
+ const activeRef=useRef(active);
  useEffect(()=>{ended.current=onEnded},[onEnded]);
+ useEffect(()=>{activeRef.current=active;try{if(active)playerRef.current?.playVideo();else playerRef.current?.pauseVideo()}catch{}},[active]);
  useEffect(()=>{
   let disposed=false;let player:YTPlayer|undefined;
   getYouTubeAPI().then(YT=>{
    if(disposed||!host.current)return;
    const element=document.createElement("div");host.current.replaceChildren(element);
-   player=new YT.Player(element,{videoId,playerVars:{autoplay:1,playsinline:1,rel:0},events:{onStateChange:event=>{if(event.data===0)ended.current()},onError:()=>{}}});
+   player=new YT.Player(element,{videoId,playerVars:{autoplay:1,playsinline:1,rel:0},events:{onReady:()=>{if(!activeRef.current)try{player?.pauseVideo()}catch{}},onStateChange:event=>{if(event.data===0)ended.current()},onError:()=>{}}});
+   playerRef.current=player;
   }).catch(()=>{});
-  return()=>{disposed=true;try{player?.destroy()}catch{}};
+  return()=>{disposed=true;playerRef.current=null;try{player?.destroy()}catch{}};
  },[videoId]);
  return <div className="spot-yt-host" ref={host} aria-label={title}/>;
 }
