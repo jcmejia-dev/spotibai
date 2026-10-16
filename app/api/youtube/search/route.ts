@@ -42,7 +42,7 @@ export async function GET(request:NextRequest){
     const target=tokens(query).filter(w=>w!=="x");
     const text=normalize(track.title+" "+track.artist);
     return !noise.test(track.title)&&target.length>0&&target.some(word=>text.includes(word));
-  }):ordered.filter(({track})=>!noise.test(track.title));
+  }):ordered;
   return NextResponse.json({items:filtered.map(x=>x.track),nextPageToken:json.nextPageToken||null,mode});
  }catch{
   return NextResponse.json({error:"Couldn't connect to the music catalog right now."},{status:502});

@@ -121,3 +121,8 @@
 .spotibai-real .yt-embedded .yt-embedded-tabs button.active{background:var(--accent);border-color:var(--accent);color:#261831}
 @media(max-width:930px){.spotibai-real .yt-embedded .yt-grid{grid-template-columns:1fr}.spotibai-real .yt-embedded .yt-discovery-grid .yt-card:first-child{grid-column:auto}.spotibai-real .yt-embedded .yt-editorial-heading:after{display:none}}
 @media(max-width:560px){.spotibai-real .yt-embedded .yt-editorial-heading{padding:24px 17px}.spotibai-real .yt-embedded .yt-editorial-heading h1{font-size:31px}.spotibai-real .yt-embedded .yt-card{gap:7px}.spotibai-real .yt-embedded .yt-card .yt-art{width:83px;height:61px;flex-basis:83px}.spotibai-real .yt-embedded .yt-discovery-grid .yt-card:first-child .yt-art{width:114px;height:76px;flex-basis:114px}.spotibai-real .yt-embedded .yt-discovery-grid .yt-card:first-child .yt-song-info strong{font-size:13px}.spotibai-real .yt-embedded .yt-card .yt-song-info strong{font-size:11px}.spotibai-real .yt-embedded .yt-row-number{width:16px;flex-basis:16px}}
+
+/* Catalog pagination — explicit Load more protects mobile performance and API quota. */
+.yt-page-footer{margin:24px 0 8px;padding:20px 0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:15px;border-top:1px solid var(--spot-border);color:var(--spot-muted);font-size:11px;letter-spacing:.4px}
+.yt-page-footer button{display:flex;align-items:center;gap:9px;justify-content:center;padding:12px 23px;border:1px solid var(--accent);border-radius:9px;background:var(--spot-surface-2);color:var(--accent);font-size:12px;font-weight:800;cursor:pointer;min-width:180px}
+.yt-page-footer button:hover{background:var(--spot-wash)}.yt-page-footer button:disabled{opacity:.55;cursor:wait}

@@ -12,6 +12,11 @@ export default function YouTubeMusic({embedded=false,initialQuery="",initialSect
  const storageKey=(key:string)=>"spotibai-user-"+userId+"-"+key;
  const [q,setQ]=useState("");const [term,setTerm]=useState("");
  const [results,setResults]=useState<Song[]>([]);
+ const [nextPageToken,setNextPageToken]=useState<string|null>(null);
+ const [loadingMore,setLoadingMore]=useState(false);
+ const [findingRelated,setFindingRelated]=useState(false);
+ const searchGeneration=useRef(0);
+ const stationGeneration=useRef(0);
  const [favorites,setFavorites]=useState<Song[]>([]);
  const [playlists,setPlaylists]=useState<Record<string,Song[]>>({});
  const [section,setSection]=useState("discover");
@@ -29,7 +34,7 @@ export default function YouTubeMusic({embedded=false,initialQuery="",initialSect
  const notify=(message:string)=>{if(toastTimer.current)clearTimeout(toastTimer.current);setToast(message);toastTimer.current=setTimeout(()=>setToast(""),3200)};
  useEffect(()=>()=>{if(toastTimer.current)clearTimeout(toastTimer.current)},[]);
  useEffect(()=>{setWatchOpen(false);setMenu(null);setPlaylistDialog(false)},[navigationSignal]);
- useEffect(()=>{setFavorites(load(storageKey(FAVORITES),[]));setPlaylists(load(storageKey(PLAYLISTS),{}));setResults(load(storageKey("last-results"),[]));setTerm(load(storageKey("last-query"),""))},[userId]);
+ useEffect(()=>{setFavorites(load(storageKey(FAVORITES),[]));setPlaylists(load(storageKey(PLAYLISTS),{}));setResults(load(storageKey("last-results"),[]));setTerm(load(storageKey("last-query"),""));setNextPageToken(load(storageKey("next-page-token"),null))},[userId]);
  useEffect(()=>{if(initialQuery.trim()){setQ(initialQuery);search(initialQuery)}},[initialQuery]);
  useEffect(()=>{if(initialSection==="favorites")setSection("favorites");else if(initialSection==="playlists"){const list=Object.keys(load<Record<string,Song[]>>(storageKey(PLAYLISTS),{}));setSection(list[0]||"playlists")}else setSection("discover")},[initialSection]);
  useEffect(()=>{if(createPlaylistSignal>0)create()},[createPlaylistSignal]);
@@ -39,10 +44,83 @@ export default function YouTubeMusic({embedded=false,initialQuery="",initialSect
  const add=(name:string,song:Song)=>{const existing=playlists[name]||[];const duplicate=existing.some(s=>s.id===song.id);saveLists({...playlists,[name]:duplicate?existing:[...existing,song]});setMenu(null);notify(duplicate?"Already in “"+name+"”":"Added to “"+name+"”")};
  const create=()=>{setPlaylistDraft("");setPendingSong(null);setPlaylistDialog(true)};
  const confirmCreate=()=>{const trimmed=playlistDraft.trim().slice(0,60);if(!trimmed)return;const exists=Object.hasOwn(playlists,trimmed);if(pendingSong){const songs=playlists[trimmed]||[];saveLists({...playlists,[trimmed]:[...songs.filter(x=>x.id!==pendingSong.id),pendingSong]})}else if(!exists)saveLists({...playlists,[trimmed]:[]});setPlaylistDialog(false);setPendingSong(null);setMenu(null);setSection(trimmed);notify(exists?(pendingSong?"Song added to “"+trimmed+"”":"Opened “"+trimmed+"”"):(pendingSong?"Created “"+trimmed+"” and added song":"Playlist “"+trimmed+"” created"))};
- const search=async(query:string)=>{if(!query.trim())return;setTerm(query.trim());setLoading(true);setError("");setSection("discover");if(!navigator.onLine){setError("You are offline. Showing your last saved discovery results. Browse your playlists or open Offline collection to play your own files.");setLoading(false);return}try{const res=await fetch("/api/youtube/search?q="+encodeURIComponent(query.trim()));const data=await res.json();if(!res.ok)throw Error(data.error||"Search failed");setResults(data.items||[]);localStorage.setItem(storageKey("last-results"),JSON.stringify(data.items||[]));localStorage.setItem(storageKey("last-query"),JSON.stringify(query.trim()))}catch(e){setError(e instanceof Error?e.message:"Search failed")}finally{setLoading(false)}};
+ const persistResults=(items:Song[],query:string,token:string|null)=>{try{localStorage.setItem(storageKey("last-results"),JSON.stringify(items.slice(0,180)));localStorage.setItem(storageKey("last-query"),JSON.stringify(query));localStorage.setItem(storageKey("next-page-token"),JSON.stringify(token))}catch{}};
+ const search=async(query:string)=>{
+  const phrase=query.trim();if(!phrase)return;
+  const id=++searchGeneration.current;setTerm(phrase);setLoading(true);setLoadingMore(false);setNextPageToken(null);setError("");setSection("discover");
+  if(!navigator.onLine){setError("You are offline. Showing saved search results. You can still browse favorites and offline audio.");setLoading(false);return}
+  try{
+   const res=await fetch("/api/youtube/search?limit=50&q="+encodeURIComponent(phrase));
+   const data=await res.json();
+   if(!res.ok)throw Error(data.error||"Search failed");
+   if(id!==searchGeneration.current)return;
+   const items=(data.items||[]) as Song[],token=data.nextPageToken||null;
+   setResults(items);setNextPageToken(token);persistResults(items,phrase,token);
+  }catch(e){if(id===searchGeneration.current)setError(e instanceof Error?e.message:"Search failed")}
+  finally{if(id===searchGeneration.current)setLoading(false)}
+ };
+ const loadMore=async()=>{
+  if(!nextPageToken||loading||loadingMore||!navigator.onLine)return;
+  const id=searchGeneration.current;const token=nextPageToken;
+  setLoadingMore(true);setError("");
+  try{
+   const url="/api/youtube/search?limit=50&q="+encodeURIComponent(term)+"&pageToken="+encodeURIComponent(token);
+   const res=await fetch(url);const data=await res.json();
+   if(!res.ok)throw Error(data.error||"Couldn't load more music.");
+   if(id!==searchGeneration.current)return;
+   const seen=new Set(results.map(x=>x.id));
+   const additions=((data.items||[]) as Song[]).filter(item=>{if(seen.has(item.id))return false;seen.add(item.id);return true});
+   const next=[...results,...additions],nextToken=(data.nextPageToken&&data.nextPageToken!==token)?data.nextPageToken:null;
+   setResults(next);setNextPageToken(nextToken);persistResults(next,term,nextToken);
+  }catch(e){if(id===searchGeneration.current)setError(e instanceof Error?e.message:"Couldn't load more songs")}
+  finally{if(id===searchGeneration.current)setLoadingMore(false)}
+ };
+
  const shown=section==="favorites"?favorites:section==="discover"?results:playlists[section]||[];
- const beginPlayback=(song:Song,source:Song[],name:string)=>{setPlayQueue([...source]);setQueueName(name);setPlaying(song);setWatchOpen(true)};
- useEffect(()=>{if(!suggestedTrack?.id)return;const song={id:suggestedTrack.id,title:suggestedTrack.title,artist:suggestedTrack.artist,thumbnail:suggestedTrack.thumbnail};setPlayQueue([song,...results.filter(item=>item.id!==song.id)]);setQueueName("Suggested songs");setPlaying(song);setWatchOpen(true)},[suggestedTrack?.nonce]);
+ const performer=(song:Song)=>{
+  const title=decode(song.title).replace(/\[[^\]]*(official|audio|lyrics|video)[^\]]*\]/gi,"").trim();
+  const fromTitle=title.split(/\s[-–—]\s/)[0]?.trim();
+  const channel=decode(song.artist).replace(/\s*(- Topic|VEVO|Official)$/i,"").trim();
+  if(fromTitle&&fromTitle.length<=64&&fromTitle.length>=2&&fromTitle!==title)return fromTitle;
+  return channel||"music";
+ };
+ const samePerformer=(song:Song,artist:string)=>{
+  const clean=(value:string)=>value.toLowerCase().replace(/[^\p{L}\p{N}]+/gu," ").trim();
+  const singer=clean(artist);
+  return singer.length>=3&&(clean(song.title).includes(singer)||clean(song.artist).includes(singer));
+ };
+ const startArtistStation=async(song:Song)=>{
+  const id=++stationGeneration.current;
+  const artist=performer(song);
+  setQueueName("More from "+artist);
+  setFindingRelated(true);
+  // Keep only clearly relevant entries while new recommendations are loading.
+  setPlayQueue([song]);
+  try{
+   const res=await fetch("/api/youtube/search?mode=artist&limit=50&q="+encodeURIComponent(artist));
+   const data=await res.json();
+   if(!res.ok)throw Error(data.error||"Unable to fetch related songs");
+   if(id!==stationGeneration.current)return;
+   const next=((data.items||[]) as Song[]).filter(track=>track.id!==song.id&&samePerformer(track,artist));
+   const seen=new Set([song.id]);const unique=next.filter(track=>{if(seen.has(track.id))return false;seen.add(track.id);return true});
+   setPlayQueue([song,...unique]);
+  }catch{if(id===stationGeneration.current)setPlayQueue([song])}
+  finally{if(id===stationGeneration.current)setFindingRelated(false)}
+ };
+ const beginPlayback=(song:Song,source:Song[],name:string)=>{
+  setPlaying(song);setWatchOpen(true);
+  if(name==="Search results"||name==="Suggested songs"){
+   void startArtistStation(song);
+  }else{
+   ++stationGeneration.current;setFindingRelated(false);
+   setPlayQueue([...source]);setQueueName(name);
+  }
+ };
+ useEffect(()=>{
+  if(!suggestedTrack?.id)return;
+  const song={id:suggestedTrack.id,title:suggestedTrack.title,artist:suggestedTrack.artist,thumbnail:suggestedTrack.thumbnail};
+  beginPlayback(song,[song],"Suggested songs");
+ },[suggestedTrack?.nonce]);
  const nextInQueue=()=>{if(!playing||playQueue.length<2)return;const at=playQueue.findIndex(song=>song.id===playing.id);if(at<0)return;const current=playQueue[at];const remaining=[...playQueue.slice(at+1),...playQueue.slice(0,at)];const following=remaining[0];setPlayQueue([...remaining,current]);setPlaying(following);notify("Up next: "+decode(following.title))};
  const removePlaylist=()=>{if(!window.confirm("Delete this playlist?"))return;const next={...playlists};delete next[section];saveLists(next);setSection("discover");notify("Playlist deleted")};
  return <div className={"yt-app "+(embedded?"yt-embedded":"")}>
@@ -84,7 +162,8 @@ export default function YouTubeMusic({embedded=false,initialQuery="",initialSect
         <aside className="yt-watch-next">
          <div className="yt-queue-header"><div><span className="yt-queue-kicker"><ListOrdered size={14}/> UP NEXT</span><h2>{queueName}</h2></div><span className="yt-queue-length">{Math.max(0,playQueue.length-1)} TRACKS</span></div>
          {[...playQueue.slice(playQueue.findIndex(x=>x.id===playing.id)+1),...playQueue.slice(0,playQueue.findIndex(x=>x.id===playing.id))].map((song,i)=><button className="yt-queue-track" key={song.id} onClick={()=>beginPlayback(song,playQueue,queueName)} aria-label={"Play "+decode(song.title)}><span className="yt-queue-index">{String(i+1).padStart(2,"0")}</span><img src={song.thumbnail} alt=""/><span><strong>{decode(song.title)}</strong><small>{decode(song.artist)}</small></span><Play size={14} className="yt-queue-play"/></button>)}
-         {playQueue.length<=1&&<p className="yt-queue-empty">One track on the deck. Search for more songs to build your queue.</p>}
+         {findingRelated&&<p className="yt-queue-empty" role="status">Finding more music from this artist…</p>}
+         {!findingRelated&&playQueue.length<=1&&<p className="yt-queue-empty">No other closely matching songs found yet. Search for more music or start a mixtape.</p>}
         </aside>
       </div>
     </div>}
@@ -97,6 +176,7 @@ export default function YouTubeMusic({embedded=false,initialQuery="",initialSect
     <div className="yt-section yt-list-section"><div><small className="yt-list-kicker">{section==="discover"?"DISCOVERY / TRACK INDEX":"THE COLLECTION / TRACK INDEX"}</small><h2>{section==="discover"?(term?"Found for “"+decode(term)+"”":"Turn up something new"):section==="favorites"?"The favorites":"On this mixtape"}</h2></div><span>{shown.length} tracks</span></div>
     {!shown.length&&!loading&&<div className="yt-empty"><Music2 size={38}/><h3>{section==="discover"?"Discover music on YouTube":"No songs here yet"}</h3><p>{section==="discover"?"Search above to explore official music videos and other YouTube results.":"Search for a song, then use the heart or plus buttons to save it."}</p></div>}
     <div className={"yt-grid "+(section==="discover"?"yt-discovery-grid":"yt-library-grid")}>{shown.map((song,index)=><article className={"yt-card "+(menu===song.id?"yt-card-menu-open":"")} key={song.id}><span className="yt-row-number">{String(index+1).padStart(2,"0")}</span><button className="yt-art" onClick={()=>beginPlayback(song,shown,section==="discover"?"Search results":section==="favorites"?"Liked songs":section)} aria-label={"Play "+decode(song.title)}><img src={song.thumbnail} alt=""/><span><Play size={23} fill="currentColor"/></span></button><div className="yt-song-info"><div><strong title={decode(song.title)}>{decode(song.title)}</strong><small>{decode(song.artist)}</small></div><button className={"yt-icon "+(favorites.some(f=>f.id===song.id)?"yt-liked":"")} onClick={()=>favorite(song)} aria-label="Like video"><Heart size={19} fill={favorites.some(f=>f.id===song.id)?"currentColor":"none"}/></button><div className="yt-add-wrap"><button className="yt-icon" onClick={()=>setMenu(menu===song.id?null:song.id)} aria-label="Add to playlist"><Plus size={19}/></button>{menu===song.id&&<div className="yt-menu"><strong>Add to playlist</strong>{Object.keys(playlists).map(name=><button key={name} onClick={()=>add(name,song)}>{name}</button>)}<button onClick={()=>{setPendingSong(song);setPlaylistDraft("");setPlaylistDialog(true);setMenu(null)}}><Plus size={14}/> Create new</button></div>}</div></div></article>)}</div>
+    {section==="discover"&&!loading&&<div className="yt-page-footer"><span>Showing {results.length} music results{nextPageToken?" · more available":""}</span>{nextPageToken&&<button type="button" onClick={()=>void loadMore()} disabled={loadingMore}>{loadingMore?"Loading more music…":"Load more music"} <ChevronDown size={17}/></button>}</div>}
     </>}
     </div>
   </main>
