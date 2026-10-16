@@ -106,7 +106,7 @@ function removeFromPlaylist(track:Track){if(!currentPlaylist)return;update({play
 function openAdd(track:Track){setSelected(track);setDialog('add')}
 function play(track:Track,list:Track[]=[],title='Selected tracks'){
  setQueue(list.length?unique(list):[track]);setQueueTitle(title);setPlaying(track);
- setExpanded(true);setYtOpen(track.source==='youtube');
+ setExpanded(true);setYtOpen(track.source==='youtube');go('player');
  if(track.source==='youtube'){audio.pause();return}
  if(!track.uri&&track.source==='local'){notify('Local file is no longer available');return}
  // Native player is used only for Audius streams or authorized locally stored audio.
@@ -145,7 +145,7 @@ async function search(query:string=q,provider:'youtube'|'audius'=source,token?:s
 }
 async function artistStation(song:Track){const singer=song.artist.replace(/\s*(- Topic|VEVO|Official)$/i,'').trim();
  const artist=singer||song.title.split(' - ')[0];
- setPlaying(song);setQueue([song]);setQueueTitle('More from '+artist);setExpanded(true);setYtOpen(true);audio.pause();
+ setPlaying(song);setQueue([song]);setQueueTitle('More from '+artist);setExpanded(true);setYtOpen(true);audio.pause();go('player');
  try{
   const response=await fetch(api+'/api/youtube/search?limit=50&mode=artist&q='+encodeURIComponent(artist));
   const json=await response.json();
@@ -359,7 +359,7 @@ function fullWeb(){return <View style={{flex:1}}>
 const current=screen==='player'?'player':screen;
 if(!hydrated)return <SafeAreaView style={{flex:1,backgroundColor:c.bg,alignItems:'center',justifyContent:'center'}}><Image source={logo} style={{width:75,height:75}}/><ActivityIndicator style={{marginTop:25}} color={c.accent}/></SafeAreaView>;
 return <SafeAreaView edges={['top','bottom']} style={{flex:1,backgroundColor:c.bg}}>
-<StatusBar backgroundColor={c.bg} barStyle={data.theme==='dark'?'light-content':'dark-content'}/>
+<StatusBar barStyle={data.theme==='dark'?'light-content':'dark-content'}/>
 <View style={{paddingHorizontal:19,paddingVertical:10,flexDirection:'row',alignItems:'center',justifyContent:'space-between'}}>
 <Pressable onPress={()=>go('home')} style={{flexDirection:'row',alignItems:'center',gap:9}}><Image source={logo} style={{height:33,width:33,borderRadius:8}}/><Text style={{fontSize:23,fontWeight:'900',letterSpacing:-1.4,color:c.text}}>spotibai<Text style={{color:c.accent}}>.</Text></Text></Pressable>
 <View style={{flexDirection:'row',alignItems:'center',gap:10}}>
