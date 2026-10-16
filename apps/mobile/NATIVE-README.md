@@ -42,3 +42,8 @@ If the website is missing, confirm the production domain `spotibai-delta.vercel.
 - When it expires, pauses native Audius audio and reloads the embedded website to stop YouTube and HTML audio. The website may return to its initial page; locally saved favorites/mixtapes remain stored.
 - This is best-effort: Android can suspend JavaScript and timers in the background. Exact sleep-time stopping with screen locked is **not guaranteed** until a native foreground-service/alarm implementation is built and device-tested. Expo Go cannot test sustained background audio.
 - The public website is unchanged. Timer is only present inside the Expo Android wrapper.
+
+## Oct 17 design and playback changes
+- Native audio now uses a safe-area-aware full-screen modal, avoiding Android status-bar overlap.
+- Android wrapper closes a playing YouTube dock on navigation to unrelated pages instead of covering collections with floating video.
+- Audius/local-file background audio needs a new APK with the native media foreground service; YouTube background playback remains unsupported.

@@ -1,5 +1,6 @@
 import {useEffect,useRef,useState} from 'react';
-import {ActivityIndicator,Alert,Image,Keyboard,Pressable,ScrollView,StatusBar,Text,TextInput,View} from 'react-native';
+import {ActivityIndicator,Alert,Image,Keyboard,Modal,Pressable,ScrollView,StatusBar,Text,TextInput,View} from 'react-native';
+import {SafeAreaProvider,SafeAreaView} from 'react-native-safe-area-context';
 import {useAudioPlayer,useAudioPlayerStatus,setAudioModeAsync} from 'expo-audio';
 import * as DocumentPicker from 'expo-document-picker';
 import {Directory,File,Paths} from 'expo-file-system';
@@ -64,7 +65,7 @@ export default function NativeAudioPanel({visible,onClose,api,stopSignal,onOpenS
    current.current=song;setActive(song);setQueue(list.length?list:[song]);setMessage('');setError('');
    audio.replace(path);
    // Expo Go may not have the media foreground service. Playback should still be testable.
-   try{audio.setActiveForLockScreen(true,{title:song.title,artist:song.artist,albumTitle:'Spotibai',artworkUrl:song.art||undefined},{showNextTrack:true,showPreviousTrack:true})}catch{}
+   try{audio.setActiveForLockScreen(true,{title:song.title,artist:song.artist,albumTitle:'Spotibai',artworkUrl:song.art||undefined},{showSeekBackward:true,showSeekForward:true})}catch{setMessage('Lock-screen controls unavailable in this build. Try a preview APK.')}
    audio.play();
   }catch(e){setError(e instanceof Error?e.message:'Unable to play this track')}
  }
@@ -130,15 +131,21 @@ export default function NativeAudioPanel({visible,onClose,api,stopSignal,onOpenS
    }}
   ])
  }
- return <View pointerEvents={visible?'auto':'none'} style={{display:visible?'flex':'none',position:'absolute',top:0,right:0,bottom:0,left:0,backgroundColor:B}}>
+ return <Modal visible={visible} animationType="slide" onRequestClose={onClose} statusBarTranslucent={false}><SafeAreaProvider><SafeAreaView edges={['top','bottom']} style={{flex:1,backgroundColor:B}}>
   <StatusBar barStyle="light-content"/>
-  <View style={{height:63,paddingHorizontal:19,flexDirection:'row',alignItems:'center',justifyContent:'space-between',borderBottomWidth:1,borderBottomColor:'#3d2c47'}}>
-   <View><Text style={{fontSize:10,color:A,letterSpacing:1.6,fontWeight:'900'}}>SPOTIBAI / BACKGROUND AUDIO</Text>
-    <Text style={{color:T,fontSize:21,fontWeight:'900',letterSpacing:-.7,marginTop:5}}>Listen without video.</Text></View>
-   <View style={{flexDirection:'row',gap:7,alignItems:'center'}}><Btn label={sleepRemainingMs>0?'⏲ '+Math.ceil(sleepRemainingMs/60000)+'m':'⏲ Timer'} onPress={onOpenSleepTimer}/><Btn label="Done ✕" onPress={onClose}/></View>
+  <View style={{paddingHorizontal:20,paddingTop:16,paddingBottom:17,borderBottomWidth:1,borderBottomColor:'#3d2c47'}}>
+    <View style={{flexDirection:'row',alignItems:'center',justifyContent:'space-between',gap:10}}>
+      <Text style={{fontSize:10,color:A,letterSpacing:1.7,fontWeight:'900',flex:1}}>SPOTIBAI / NATIVE AUDIO</Text>
+      <Pressable onPress={onClose} accessibilityRole="button" accessibilityLabel="Close player" style={{height:38,width:38,backgroundColor:'#392a42',borderRadius:11,alignItems:'center',justifyContent:'center'}}><Text style={{color:T,fontSize:20}}>✕</Text></Pressable>
+    </View>
+    <Text style={{color:T,fontWeight:'900',fontSize:26,letterSpacing:-.9,marginTop:4}}>Listen without video.</Text>
+    <View style={{flexDirection:'row',alignItems:'center',justifyContent:'space-between',gap:8,marginTop:12}}>
+     <Text numberOfLines={1} style={{flex:1,fontSize:12,color:M}}>Audius  •  Real audio</Text>
+     <Btn label={sleepRemainingMs>0?'⏲ '+Math.ceil(sleepRemainingMs/60000)+'m':'⏲ Sleep timer'} onPress={onOpenSleepTimer}/>
+    </View>
   </View>
   <ScrollView keyboardShouldPersistTaps="handled" style={{flex:1}} contentContainerStyle={{paddingHorizontal:19,paddingBottom:25}}>
-   <Text style={{color:M,fontSize:12,lineHeight:19,marginTop:15}}>Play Audius music using native Android audio. Lock-screen controls require a standalone APK. YouTube videos remain foreground-only.</Text>
+   <Text style={{color:M,fontSize:12,lineHeight:19,marginTop:15}}>Play Audius music or files you own. A properly configured Android APK supports background listening; YouTube videos stay foreground-only.</Text>
    <View style={{flexDirection:'row',gap:9,marginTop:18}}>
     <Btn label="Discover" primary={tab==='discover'} onPress={()=>setTab('discover')}/>
     <Btn label={'Offline ('+saved.length+')'} primary={tab==='offline'} onPress={()=>setTab('offline')}/>
@@ -174,5 +181,5 @@ export default function NativeAudioPanel({visible,onClose,api,stopSignal,onOpenS
    </View>
    {status.error?<Text style={{fontSize:10,color:'#ffbacb'}}>Playback error: {status.error}</Text>:null}
   </View>:null}
- </View>
+ </SafeAreaView></SafeAreaProvider></Modal>;
 }
