@@ -1,0 +1,112 @@
+/* Compact, visible YouTube dock to preserve video playback during in-app navigation.
+   Unlike the retired white banner, the real YouTube iframe remains visible and interactive.
+   The viewport stays >= 200px in both dimensions as required by YouTube embed policy. */
+.spotibai-real .yt-player-room.yt-watch-docked{
+  position:fixed!important;
+  right:18px!important;
+  bottom:19px!important;
+  top:auto!important;
+  left:auto!important;
+  width:360px!important;
+  max-width:calc(100vw - 24px)!important;
+  height:auto!important;
+  max-height:none!important;
+  padding:0!important;
+  margin:0!important;
+  border:1px solid color-mix(in srgb,var(--accent) 56%,#483657)!important;
+  border-radius:12px!important;
+  background:#19111f!important;
+  box-shadow:0 16px 52px #000b!important;
+  z-index:120!important;
+  display:flex!important;
+  flex-direction:column!important;
+  overflow:visible!important;
+  animation:none!important;
+  opacity:1!important;
+  transform:none!important;
+  visibility:visible!important;
+  pointer-events:auto!important;
+  isolation:isolate;
+}
+.spotibai-real .spot-view-hidden .yt-watch-docked{
+  position:fixed!important;
+  visibility:visible!important;
+  pointer-events:auto!important;
+}
+.spotibai-real .yt-watch-docked .spot-player-dock-head{
+  height:47px;
+  min-height:47px;
+  padding:7px 10px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  color:#f9f2ff;
+  background:#201628;
+  border-radius:11px 11px 0 0;
+}
+.spot-player-dock-live{
+  flex:none;width:7px;height:7px;border-radius:50%;background:var(--accent);
+  box-shadow:0 0 10px var(--accent);
+}
+.spot-player-dock-song{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.spot-player-dock-song strong,.spot-player-dock-song small{display:block;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.spot-player-dock-song strong{font-size:11px;font-weight:800}
+.spot-player-dock-song small{font-size:9px;color:#c5b1cb}
+.spotibai-real .yt-watch-docked .spot-player-dock-head button{
+  flex:none;display:grid;place-items:center;border:none;border-radius:7px;
+  background:#3a2944;color:#e9dbf7;width:29px;height:29px;
+  cursor:pointer;padding:0;
+}
+.spotibai-real .yt-watch-docked .spot-player-dock-head button:hover{background:#513662}
+.spotibai-real .yt-watch-docked .yt-player-head,
+.spotibai-real .yt-watch-docked .yt-watch-next,
+.spotibai-real .yt-watch-docked .yt-player-track-meta,
+.spotibai-real .yt-watch-docked .yt-watch-actions,
+.spotibai-real .yt-watch-docked .yt-player-footnote,
+.spotibai-real .yt-watch-docked .yt-mini-expand{display:none!important}
+.spotibai-real .yt-watch-docked .yt-watch-layout,
+.spotibai-real .yt-watch-docked .yt-watch-main{
+  display:block!important;position:relative!important;margin:0!important;
+  padding:0!important;width:100%!important;min-width:0!important;
+  max-width:none!important;grid-template-columns:none!important;
+}
+.spotibai-real .yt-watch-docked .yt-watch-main .yt-frame{
+  display:block!important;
+  width:100%!important;
+  height:203px!important;
+  min-height:203px!important;
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0 0 11px 11px!important;
+  box-shadow:none!important;
+  overflow:hidden!important;
+  background:#000!important;
+  aspect-ratio:auto!important;
+}
+.spotibai-real .yt-watch-docked .yt-frame .yt-video-shell,
+.spotibai-real .yt-watch-docked .yt-frame .spot-yt-host,
+.spotibai-real .yt-watch-docked .yt-frame iframe{
+  display:block!important;
+  width:100%!important;
+  height:203px!important;
+  min-height:203px!important;
+  aspect-ratio:auto!important;
+  border:0!important;
+}
+@media(max-width:900px){
+ .spotibai-real .yt-player-room.yt-watch-docked{
+   right:12px!important;
+   bottom:calc(78px + env(safe-area-inset-bottom))!important;
+   width:256px!important;
+ }
+ .spotibai-real .yt-watch-docked .yt-watch-main .yt-frame,
+ .spotibai-real .yt-watch-docked .yt-frame .yt-video-shell,
+ .spotibai-real .yt-watch-docked .yt-frame .spot-yt-host,
+ .spotibai-real .yt-watch-docked .yt-frame iframe{
+   height:200px!important;min-height:200px!important;
+ }
+}
+@media(max-width:280px){
+ .spotibai-real .yt-player-room.yt-watch-docked{width:calc(100vw - 24px)!important}
+}

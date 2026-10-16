@@ -1,6 +1,6 @@
 "use client";
 import {useEffect,useRef,useState} from "react";
-import {ArrowLeft,Heart, ListMusic, Music2, Play, Plus, Search, Trash2, X, Youtube, CheckCircle2, Download, Disc3, ListOrdered, ChevronDown} from "lucide-react";
+import {ArrowLeft,Heart, ListMusic, Music2, Play, Plus, Search, Trash2, X, Youtube, CheckCircle2, Download, Disc3, ListOrdered, ChevronDown, Maximize2} from "lucide-react";
 import "./youtube.css";
 
 type Song={id:string;title:string;artist:string;thumbnail:string};
@@ -123,6 +123,7 @@ export default function YouTubeMusic({embedded=false,initialQuery="",initialSect
   const song={id:suggestedTrack.id,title:suggestedTrack.title,artist:suggestedTrack.artist,thumbnail:suggestedTrack.thumbnail};
   beginPlayback(song,[song],"Suggested songs");
  },[suggestedTrack?.nonce]);
+ const stopPlayback=()=>{++stationGeneration.current;setFindingRelated(false);setPlayQueue([]);setPlaying(null);setWatchOpen(false);notify("Playback stopped")};
  const nextInQueue=()=>{if(!playing||playQueue.length<2)return;const at=playQueue.findIndex(song=>song.id===playing.id);if(at<0)return;const current=playQueue[at];const remaining=[...playQueue.slice(at+1),...playQueue.slice(0,at)];const following=remaining[0];setPlayQueue([...remaining,current]);setPlaying(following);notify("Up next: "+decode(following.title))};
  const removePlaylist=()=>{if(!window.confirm("Delete this playlist?"))return;const next={...playlists};delete next[section];saveLists(next);setSection("discover");notify("Playlist deleted")};
  return <div className={"yt-app "+(embedded?"yt-embedded":"")}>
@@ -137,7 +138,8 @@ export default function YouTubeMusic({embedded=false,initialQuery="",initialSect
   <main className="yt-main">
     <header className="yt-top"><a href="/" className="yt-mobile-back"><ArrowLeft size={20}/></a><span className="yt-tag"><Youtube size={17}/> YouTube Music Discovery</span><a href="/" className="yt-top-home">Spotibai home ↗</a></header>
     <div className="yt-content">
-    {playing&&<div className={"yt-watch-page yt-player-room "+(watchOpen?"":"yt-player-paused-hidden")}>
+    {playing&&<div className={"yt-watch-page yt-player-room "+(watchOpen?"":"yt-watch-docked")}>
+      {!watchOpen&&<div className="spot-player-dock-head"><span className="spot-player-dock-live" aria-hidden="true"/><div className="spot-player-dock-song"><strong title={decode(playing.title)}>{decode(playing.title)}</strong><small>{decode(playing.artist)}</small></div><button type="button" title="Expand music player" aria-label="Expand music player" onClick={()=>setWatchOpen(true)}><Maximize2 size={17}/></button><button type="button" title="Stop playback" aria-label="Stop playback" onClick={stopPlayback}><X size={17}/></button></div>}
       <div className="yt-player-head">
        <button className="yt-watch-back" onClick={()=>setWatchOpen(false)} title="Return to your collection" aria-label="Back to music collection"><ArrowLeft size={21}/><span>Back to your music</span></button>
        <div className="yt-player-now"><span className="yt-player-onair"><span/> ON AIR / SPOTIBAI</span><strong title={decode(playing.title)}>{decode(playing.title)}</strong></div>
@@ -145,7 +147,7 @@ export default function YouTubeMusic({embedded=false,initialQuery="",initialSect
       </div>
       <div className="yt-watch-layout">
         <div className="yt-watch-main">
-          <div className="yt-frame"><YouTubeVideo videoId={playing.id} title={decode(playing.title)} active={watchOpen} onEnded={nextInQueue}/></div>
+          <div className="yt-frame"><YouTubeVideo videoId={playing.id} title={decode(playing.title)} active={true} onEnded={nextInQueue}/></div>
           <div className="yt-player-track-meta">
            <div className="yt-track-disc"><Disc3 size={20}/></div>
            <div><span className="yt-player-meta-label">CURRENTLY SPINNING</span><h1>{decode(playing.title)}</h1><p>{decode(playing.artist)}</p></div>
