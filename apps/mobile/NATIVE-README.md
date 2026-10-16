@@ -1,31 +1,27 @@
-# Spotibai mobile parity (Expo 58)
-This app is a native React Native music app separate from the Next.js website.
+# Spotibai Hybrid Android App — Full UI Parity
 
-## Install and run
+This Expo SDK 58 build has two modes:
+
+**Original Spotibai (default):** the *actual current web application* displayed inside an Android WebView, including its existing responsive UI, Neon sign-in/guest flow, playlists, favorites, YouTube video player and web offline vault. This is intentionally a **hybrid app**, not a claim that the website was rewritten into native React Native.
+
+**Native audio & offline:** the separate React Native tools built with Expo Audio, AsyncStorage, and FileSystem for Audius music streaming, authorized downloading, local files, and a separate native collection.
+
+These modes **do not sync their favorites or playlists**: the original site uses browser localStorage while native uses AsyncStorage. A common database and native Neon session are needed for true cross-device syncing.
+
+## YouTube error 153
+The earlier native app loaded a bare `youtube-nocookie.com/embed` page without a Referer, which YouTube rejects. The native player now uses an HTML iframe wrapper with `baseUrl` (the configured Spotibai domain) and `strict-origin-when-cross-origin`. The original website loads from its normal HTTPS origin and embeds YouTube in a browser-like context. Some videos disallow embedding; users can open them directly on YouTube. YouTube audio cannot be ripped, downloaded, or played as hidden background audio.
+
+## Running
 ```powershell
+cd C:\Users\pc\OneDrive\Documents\Projects\spotibai
+git pull --ff-only origin feat/spotibai-music-ui
 cd apps/mobile
 npm install
-npx expo start --clear
+npx expo start --clear --port 8082
 ```
-Expo Go SDK 58 supports testing UI, Audius native audio, file selection and WebView.
 
-## Native features
-- YouTube Data API music search, 50-result pagination, artist-based Up Next queue
-- Official YouTube embedded visible video player (not background audio or offline downloading)
-- Audius streaming with expo-audio playback controls, seek, next/previous, repeat
-- Mixed-source favorites and mixtapes (create, rename, remove, delete)
-- Persistent native local library, preferences and recent searches using AsyncStorage
-- Local owned audio import; artist-authorized Audius download and offline playback
-- Dark/light themes, multiple accent colors, subtle screen transitions
-- Full original website accessible from Settings for Neon sign-in and web-only collection
+Test both Original Spotibai mode and Native audio & offline mode on device.
 
-## Important scope
-Native collections are saved on this device, not shared with the browser. The existing web app stores its data in browser localStorage, even after Neon login. Neon session and playlists **are not synchronized to the native app**. Full website tab lets users access their original web experience in the meantime.
-On Android, sustained background playback/lock-screen controls require an EAS development/standalone APK with the expo-audio config plugin; Expo Go is insufficient. YouTube videos must remain visible and user controlled.
-When the Vercel hostname changes, use Profile > API address and enter the current public HTTPS production URL.
+If the Vercel domain changed, update the API address under **Native audio & offline > Settings**. Restart/switch modes to load the new domain.
 
-## Offline and consent
-Only local files chosen by the user and server-verified artist-authorized Audius tracks can be downloaded. Never download YouTube media with this app.
-
-## Before APK
-Test on Android Expo Go, then run `eas build --profile preview --platform android` with a suitable eas.json profile and a properly configured Expo/EAS project.
+Expo Go is for testing. Native Android background audio/lock screen controls require a properly configured EAS dev/standalone build and real device testing. The hybrid web screen does not become an offline native app merely because it is inside an APK.

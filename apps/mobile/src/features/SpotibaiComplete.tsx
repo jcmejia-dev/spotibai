@@ -1,5 +1,5 @@
 import {useCallback,useEffect,useRef,useState} from 'react';
-import {ActivityIndicator,Alert,Animated,Image,Keyboard,Modal,Pressable,ScrollView,StatusBar,StyleSheet,Text,TextInput,View} from 'react-native';
+import {ActivityIndicator,Alert,Animated,Image,Keyboard,Modal,Pressable,ScrollView,StatusBar,StyleSheet,Text,TextInput,View,Linking} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useAudioPlayer,useAudioPlayerStatus,setAudioModeAsync} from 'expo-audio';
 import * as DocumentPicker from 'expo-document-picker';
@@ -304,17 +304,33 @@ function profile(){return <>
 <View style={{marginTop:15}}><Action label="Open full Spotibai website  ↗" c={c} solid onPress={()=>go('web')}/></View></>)}
 <Text style={{...small(c),marginTop:21}}>Native likes, mixtapes and downloads persist on this phone. They are separate from the website's browser-local data until account synchronization is implemented.</Text>
 </>}
-function youtubePlayer(){if(!playing||playing.source!=='youtube')return null;return <>
+function youtubePlayer(){if(!playing||playing.source!=='youtube')return null;
+ const embedId=/^[a-zA-Z0-9_-]{11}$/.test(playing.id)?playing.id:'';
+ const origin=isHttp(api)?api:DEFAULT_API;
+ // HTML + baseUrl supply a real embedder origin / Referer, required by YouTube error 153.
+ // No audio extraction or hidden video; users operate YouTube's official iframe.
+ const html='<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no"/><meta name="referrer" content="strict-origin-when-cross-origin"/><style>html,body{margin:0;background:#000;height:100%;overflow:hidden}iframe{width:100%;height:100%;border:0;display:block}</style></head><body>'
+ +'<iframe src="https://www.youtube.com/embed/'+embedId+'?playsinline=1&rel=0&origin='+encodeURIComponent(origin)+'" '
+ +'referrerpolicy="strict-origin-when-cross-origin" '
+ +'allow="accelerometer;autoplay;encrypted-media;gyroscope;picture-in-picture;fullscreen" allowfullscreen></iframe></body></html>';
+ return <>
 <Heading eyebrow="YouTube / official embedded player" title="Currently spinning." c={c}/>
-<Text style={{...small(c),marginBottom:12}}>Keep the video visible to listen. Audio stops when you close this video or leave the player.</Text>
-<View style={{height:215,backgroundColor:'#000',borderRadius:14,overflow:'hidden'}}>
-{ytOpen?<WebView key={playing.id} source={{uri:'https://www.youtube-nocookie.com/embed/'+encodeURIComponent(playing.id)+'?playsinline=1&rel=0'}}
- javaScriptEnabled allowsFullscreenVideo allowsInlineMediaPlayback mediaPlaybackRequiresUserAction
- onError={()=>notify('YouTube embed unavailable. Try another music video.')}
+<Text style={{...small(c),marginBottom:12}}>Tap Play in the video below. YouTube requires its player to remain visible while listening.</Text>
+<View style={{height:220,backgroundColor:'#000',borderRadius:14,overflow:'hidden'}}>
+{ytOpen&&embedId?<WebView key={playing.id+'-'+origin} source={{html,baseUrl:origin+'/'}} originWhitelist={['*']}
+ javaScriptEnabled domStorageEnabled allowsFullscreenVideo allowsInlineMediaPlayback
+ mediaPlaybackRequiresUserAction startInLoadingState
+ renderLoading={()=><ActivityIndicator color={c.accent} style={{flex:1,backgroundColor:'#000'}}/>}
+ onError={()=>notify('Video could not load; try opening it in YouTube.')}
  style={{flex:1,backgroundColor:'#000'}}/>:<Action label="Open video" c={c} solid onPress={()=>setYtOpen(true)}/>}
-</View><View style={{marginTop:17}}><Text style={{color:c.text,fontSize:18,fontWeight:'900'}}>{playing.title}</Text><Text style={{...small(c),marginTop:5}}>{playing.artist}</Text></View>
+</View>
+<View style={{marginTop:11,flexDirection:'row',justifyContent:'space-between',alignItems:'center',gap:8}}>
+<Text style={{...small(c),flex:1}}>If this video is blocked by YouTube, open it in YouTube instead.</Text>
+<Action label="Watch on YouTube ↗" c={c} onPress={()=>{void Linking.openURL('https://www.youtube.com/watch?v='+encodeURIComponent(playing.id)).catch(()=>notify('Cannot open YouTube.'))}}/>
+</View>
+<View style={{marginTop:17}}><Text style={{color:c.text,fontSize:18,fontWeight:'900'}}>{playing.title}</Text><Text style={{...small(c),marginTop:5}}>{playing.artist}</Text></View>
 <View style={{flexDirection:'row',alignItems:'center',gap:11,marginTop:20}}>
-<Pill label="♡ Like" c={c} onPress={()=>like(playing)}/>
+<Pill label={isLiked(playing)?'♥ Liked':'♡ Like'} c={c} onPress={()=>like(playing)}/>
 <Pill label="+ Mixtape" c={c} onPress={()=>openAdd(playing)}/>
 <Pill label="Next →" c={c} onPress={()=>playNext(1)}/>
 </View>
