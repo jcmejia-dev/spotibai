@@ -6,6 +6,7 @@ import AuthGate from "./components/AuthGate";
 import {authClient} from "../lib/auth/client";
 import OfflineVault from "./components/OfflineVault";
 import ListeningRoomHome from "./components/ListeningRoomHome";
+import InstallApp from "./components/InstallApp";
 type User={id:string;name:string;email:string;isGuest?:boolean};
 
 type Screen="home"|"search"|"favorites"|"playlists"|"offline"|"profile";
@@ -79,7 +80,7 @@ function Spotibai({user,exitGuest}:{user:User;exitGuest:()=>void}){
      {query.trim()&&<button className="spot-suggest-all" onMouseDown={e=>e.preventDefault()} onClick={()=>find(query)}>Search for “{query.trim()}” <Search size={16}/></button>}
     </div>}
    </div>
-   <div className="top-actions">{currentTrack&&<button className="spot-resume-player-button" aria-label={"Return to player: "+currentTrack.title} title={"Return to player: "+currentTrack.title} onClick={()=>{go("search");setRestorePlayerSignal(value=>value+1)}}><Music2 size={18}/></button>}<button className="avatar" title="Profile and settings" aria-label="Open settings" onClick={()=>go("profile")}>{(String(user.name||user.email||"S"))[0].toUpperCase()}</button></div>
+   <div className="top-actions"><InstallApp placement="header"/>{currentTrack&&<button className="spot-resume-player-button" aria-label={"Return to player: "+currentTrack.title} title={"Return to player: "+currentTrack.title} onClick={()=>{go("search");setRestorePlayerSignal(value=>value+1)}}><Music2 size={18}/></button>}<button className="avatar" title="Profile and settings" aria-label="Open settings" onClick={()=>go("profile")}>{(String(user.name||user.email||"S"))[0].toUpperCase()}</button></div>
   </header>
   <div className="scroll-content" ref={scrollArea}>
    {!online&&<div className="spot-connection-notice" role="status"><WifiOff size={16}/> Offline now — your saved collection and on-device audio remain available. Streaming and search need an internet connection. <button onClick={()=>go("offline")}>Open offline library →</button></div>}

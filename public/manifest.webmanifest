@@ -1,17 +1,24 @@
 {
   "name": "Spotibai — Your Listening Room",
   "short_name": "Spotibai",
-  "description": "A personal listening room for music discovery and owned offline audio.",
+  "description": "Your music. Your space. A free personal listening room.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#100c16",
   "theme_color": "#100c16",
   "icons": [
     {
-      "src": "/spotibai-icon.png",
-      "sizes": "64x64",
+      "src": "/api/install-icon/192",
+      "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/api/install-icon/512",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
     }
   ]
 }
