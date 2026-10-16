@@ -20,67 +20,7 @@ export default function SpotibaiShell(){
  const web=useRef<WebView<{}>>(null);
  useEffect(()=>{
   AsyncStorage.getItem('spotibai-native-v2').then(raw=>{
-   if(raw){const old=JSON.parse(raw) as {api?:string};if(old.api&&validUrl(old.api))setSite(old.api.replace(new RegExp('/+);}
-  }).catch(()=>{});
- },[]);
- useEffect(()=>{
-  const listener=BackHandler.addEventListener('hardwareBackPress',()=>{
-   if(panelOpen){setPanelOpen(false);return true;}
-   if(canGoBack){web.current?.goBack();return true;}
-   return false;
-  });
-  return()=>listener.remove();
- },[canGoBack,panelOpen]);
- function handleMessage(payload:string){
-  try{const message=JSON.parse(payload) as WebMessage;
-   if(message.type==='spotibai:open-audio')setPanelOpen(true);
-   if(message.type==='spotibai:youtube-start')setStopSignal(x=>x+1);
-  }catch{}
- }
- return <SafeAreaView style={{flex:1,backgroundColor:'#120d18'}} edges={['top','bottom']}>
- <StatusBar barStyle="light-content"/>
- {webError?<View style={{flex:1,alignItems:'center',justifyContent:'center',padding:28}}>
-  <Image source={icon} style={{width:72,height:72,borderRadius:15}}/>
-  <Text style={{fontSize:23,fontWeight:'900',color:'#fff',marginTop:20}}>Spotibai couldn't load</Text>
-  <Text style={{textAlign:'center',color:'#c9b9d3',fontSize:12,lineHeight:21,marginTop:12}}>{webError}</Text>
-  <Pressable style={{backgroundColor:'#b28dff',padding:13,borderRadius:10,marginTop:22}} onPress={()=>{setWebError('');setReload(x=>x+1)}}>
-   <Text style={{color:'#1b1024',fontWeight:'900'}}>Try again</Text>
-  </Pressable>
-  <Pressable onPress={()=>void Linking.openURL(site).catch(()=>{})} style={{marginTop:15,padding:12}}>
-   <Text style={{color:'#b28dff'}}>Open in browser ↗</Text>
-  </Pressable>
- </View>:
- <WebView<{}>
-  key={site+'-'+reload}
-  ref={web}
-  source={{uri:site+'/'}}
-  originWhitelist={['https://*']}
-  javaScriptEnabled
-  domStorageEnabled
-  sharedCookiesEnabled
-  thirdPartyCookiesEnabled
-  allowsFullscreenVideo
-  allowsInlineMediaPlayback
-  mediaPlaybackRequiresUserAction={false}
-  setSupportMultipleWindows={false}
-  injectedJavaScriptBeforeContentLoaded={JAVASCRIPT}
-  injectedJavaScript={JAVASCRIPT}
-  onMessage={event=>handleMessage(event.nativeEvent.data)}
-  onNavigationStateChange={(s:WebViewNavigation)=>{setCanGoBack(s.canGoBack)}}
-  onError={()=>setWebError('Check your connection and confirm the Spotibai production domain in Vercel is connected.')}
-  startInLoadingState
-  renderLoading={()=><View style={{flex:1,backgroundColor:'#120d18',alignItems:'center',justifyContent:'center'}}>
-   <Image source={icon} style={{width:70,height:70,borderRadius:16}}/>
-   <ActivityIndicator color="#b28dff" style={{marginTop:25}}/>
-   <Text style={{marginTop:14,fontSize:11,color:'#c5a9da',letterSpacing:1.5}}>FINDING YOUR RHYTHM</Text>
-  </View>}
-  style={{flex:1,backgroundColor:'#120d18'}}
- />}
- {/* The Audius player stays mounted when its sheet closes: audio can continue in the APK. */}
- <NativeAudioPanel visible={panelOpen} onClose={()=>setPanelOpen(false)} api={site} stopSignal={stopSignal}/>
- </SafeAreaView>;
-}
-),''));}
+   if(raw){const old=JSON.parse(raw) as {api?:string};if(old.api&&validUrl(old.api))setSite(old.api.endsWith('/')?old.api.slice(0,-1):old.api);}
   }).catch(()=>{});
  },[]);
  useEffect(()=>{
