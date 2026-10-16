@@ -98,7 +98,7 @@ function Spotibai({user,exitGuest}:{user:User;exitGuest:()=>void}){
     <section className="room-offline-entry"><div><Download size={20}/><span><strong>Take your own music anywhere.</strong><small>Keep music files you own on this device, even without Wi-Fi.</small></span></div><button onClick={()=>go("offline")}>Open offline library <ArrowRight size={16}/></button></section>
     <footer className="room-footer"><Headphones size={17}/><span>GOOD MUSIC. GOOD COMPANY. NO RUSH.</span><Radio size={17}/></footer>
    </div>}
-   {screen==="offline"&&<OfflineVault userId={user.id} isGuest={Boolean(user.isGuest)}/>}
+   {screen==="offline"&&<OfflineVault userId={user.id}/>}
    {screen==="profile"&&<section className="spot-settings studio-preferences search-view-enter">
  <div className="studio-settings-header"><div><span className="studio-eyebrow">SPOTIBAI / STUDIO SETTINGS</span><h1>Your space, your sound.</h1><p>Set the atmosphere of your listening room.</p></div><SlidersHorizontal size={27}/></div>
  <div className="studio-pref-row"><div className="studio-pref-label"><strong>Appearance</strong><span>Daylight or after dark</span></div><div className="studio-mode-switch"><button className={mode==="dark"?"active":""} onClick={()=>setTheme("dark")}>Night {mode==="dark"&&<Check size={14}/>}</button><button className={mode==="light"?"active":""} onClick={()=>setTheme("light")}>Daylight {mode==="light"&&<Check size={14}/>}</button></div></div>
