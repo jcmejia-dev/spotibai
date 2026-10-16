@@ -8,7 +8,7 @@ const FAVORITES="favorites-v1";
 const PLAYLISTS="playlists-v1";
 function load<T>(key:string,fallback:T):T {try{const value=localStorage.getItem(key);return value?JSON.parse(value) as T:fallback}catch{return fallback}}
 function decode(s:string){if(typeof document==="undefined")return s;const el=document.createElement("textarea");el.innerHTML=s;return el.value}
-export default function YouTubeMusic({embedded=false,initialQuery="",initialSection="discover",createPlaylistSignal=0,navigationSignal=0,suggestedTrack=null,userId="",onOpenOffline}:{onOpenOffline?:()=>void;userId?:string;embedded?:boolean;initialQuery?:string;initialSection?:string;createPlaylistSignal?:number;navigationSignal?:number;suggestedTrack?:({id:string;title:string;artist:string;thumbnail:string;nonce:number}|null)}){
+export default function YouTubeMusic({embedded=false,initialQuery="",initialSection="discover",createPlaylistSignal=0,navigationSignal=0,suggestedTrack=null,userId="",onOpenOffline,onTrackChange}:{onTrackChange?:(track:{id:string;title:string;artist:string}|null)=>void;onOpenOffline?:()=>void;userId?:string;embedded?:boolean;initialQuery?:string;initialSection?:string;createPlaylistSignal?:number;navigationSignal?:number;suggestedTrack?:({id:string;title:string;artist:string;thumbnail:string;nonce:number}|null)}){
  const storageKey=(key:string)=>"spotibai-user-"+userId+"-"+key;
  const [q,setQ]=useState("");const [term,setTerm]=useState("");
  const [results,setResults]=useState<Song[]>([]);
@@ -22,6 +22,7 @@ export default function YouTubeMusic({embedded=false,initialQuery="",initialSect
  const [section,setSection]=useState("discover");
  const [loading,setLoading]=useState(false);const [error,setError]=useState("");
  const [playing,setPlaying]=useState<Song|null>(null);
+ useEffect(()=>{onTrackChange?.(playing?{id:playing.id,title:decode(playing.title),artist:decode(playing.artist)}:null)},[playing?.id,playing?.title,playing?.artist]);
  const [watchOpen,setWatchOpen]=useState(false);
  const [playQueue,setPlayQueue]=useState<Song[]>([]);
  const [queueName,setQueueName]=useState("Search results");

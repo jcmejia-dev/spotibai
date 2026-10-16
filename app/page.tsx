@@ -27,6 +27,7 @@ function Spotibai({user,exitGuest}:{user:User;exitGuest:()=>void}){
  const scrollArea=useRef<HTMLDivElement>(null);
 
  const [submitted,setSubmitted]=useState("");
+ const [currentTrack,setCurrentTrack]=useState<{id:string;title:string;artist:string}|null>(null);
  const [suggestPlay,setSuggestPlay]=useState<{id:string;title:string;artist:string;thumbnail:string;nonce:number}|null>(null);
  const [drawer,setDrawer]=useState(false);
  const [newPlaylist,setNewPlaylist]=useState(0);
@@ -81,7 +82,7 @@ function Spotibai({user,exitGuest}:{user:User;exitGuest:()=>void}){
   </header>
   <div className="scroll-content" ref={scrollArea}>
    {!online&&<div className="spot-connection-notice" role="status"><WifiOff size={16}/> Offline now — your saved collection and on-device audio remain available. Streaming and search need an internet connection. <button onClick={()=>go("offline")}>Open offline library →</button></div>}
-   {screen==="home"&&<ListeningRoomHome onNavigate={go} onSearch={heading} />}
+   {screen==="home"&&<ListeningRoomHome onNavigate={go} onSearch={heading} currentTrack={currentTrack}/>}
    {screen==="offline"&&<OfflineVault userId={user.id}/>}
    {screen==="profile"&&<section className="spot-settings studio-preferences search-view-enter">
  <div className="studio-settings-header"><div><span className="studio-eyebrow">SPOTIBAI / STUDIO SETTINGS</span><h1>Your space, your sound.</h1><p>Set the atmosphere of your listening room.</p></div><SlidersHorizontal size={27}/></div>
@@ -91,7 +92,7 @@ function Spotibai({user,exitGuest}:{user:User;exitGuest:()=>void}){
  <div className="spot-identity-bar"><span>{user.isGuest?"Browsing as Guest":`Signed in as ${user.name||user.email}`}</span><span>{online?"● Online":"○ Offline"}</span></div>
  <button type="button" className="spot-signout" onClick={()=>user.isGuest?exitGuest():void authClient.signOut()}>{user.isGuest?"Sign in / Create account":"Sign out"}</button><div className="studio-settings-foot"><Music2 size={17}/> Preferences and music collections are saved on this device. Guest data stays separate from account data.</div>
  </section>}
- <div className={"search-view-enter "+(screen==="home"||screen==="profile"||screen==="offline"?"spot-view-hidden":"") }><YouTubeMusic userId={user.id} onOpenOffline={()=>go("offline")} embedded initialQuery={submitted} initialSection={screen==="favorites"?"favorites":screen==="playlists"?"playlists":"discover"} createPlaylistSignal={newPlaylist} navigationSignal={navigationSignal} suggestedTrack={suggestPlay}/></div>
+ <div className={"search-view-enter "+(screen==="home"||screen==="profile"||screen==="offline"?"spot-view-hidden":"") }><YouTubeMusic userId={user.id} onTrackChange={setCurrentTrack} onOpenOffline={()=>go("offline")} embedded initialQuery={submitted} initialSection={screen==="favorites"?"favorites":screen==="playlists"?"playlists":"discover"} createPlaylistSignal={newPlaylist} navigationSignal={navigationSignal} suggestedTrack={suggestPlay}/></div>
   </div>
  </main>
  <nav className="spot-mobile-tabs" aria-label="Primary navigation">

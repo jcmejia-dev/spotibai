@@ -25,7 +25,9 @@
 .mx-cassette-top{display:flex;justify-content:space-between;gap:8px;font-size:9px;font-weight:900;letter-spacing:1.3px;margin-bottom:10px}
 .mx-tape-sticker{height:73%;background:#ead9b8;color:#26212a;border-radius:3px;position:relative;padding:11px 16px;box-shadow:0 2px 7px #0008}
 .mx-tape-label{font-size:10px;letter-spacing:2px;font-weight:800;line-height:1.4}
-.mx-tape-label strong{font-size:clamp(12px,1.7vw,20px);letter-spacing:-.2px}
+.mx-tape-label strong{font-size:clamp(11px,1.5vw,18px);letter-spacing:-.3px;line-height:1.1;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;overflow-wrap:anywhere;max-height:2.3em;margin-top:3px}
+.mx-tape-label{height:42px;min-width:0;overflow:hidden;white-space:normal}
+.mx-tape-bottom span:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:67%}
 .mx-tape-window{position:relative;display:flex;align-items:center;justify-content:space-evenly;gap:6px;width:100%;height:51%;background:#19151b;border:6px solid #584b58;border-radius:30px;margin-top:9px;overflow:hidden}
 .mx-reel{width:57px;max-width:27%;aspect-ratio:1;display:grid;place-items:center;border:11px dotted #b4a9b6;border-radius:50%;background:#42394c;animation:mx-reel-spin 4s linear infinite}
 .mx-reel span{width:35%;aspect-ratio:1;border-radius:50%;background:#e1d3d6}
