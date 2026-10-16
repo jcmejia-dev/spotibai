@@ -29,3 +29,5 @@
 .spot-offline-controls button{border:0;border-radius:50%;width:39px;height:39px;display:grid;place-items:center;background:var(--accent);color:#24152c;cursor:pointer}
 .spot-offline-audio{display:block;width:100%;height:42px;accent-color:var(--accent)}
 @media(max-width:600px){.spot-offline-track{gap:8px;padding:10px 4px}.spot-offline-head>svg{width:30px}.spot-offline-size{display:none}}
+
+.spot-offline-track button[title^="Download"]{color:var(--accent);border:1px solid var(--spot-border)}.spot-offline-track button[title^="Download"]:hover{background:var(--spot-wash)}

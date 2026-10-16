@@ -1,6 +1,6 @@
 "use client";
 import {useEffect,useRef,useState} from "react";
-import {ArrowLeft,Heart, ListMusic, Music2, Play, Plus, Search, Trash2, X, Youtube, CheckCircle2} from "lucide-react";
+import {ArrowLeft,Heart, ListMusic, Music2, Play, Plus, Search, Trash2, X, Youtube, CheckCircle2, Download, ArrowUpRight, Disc3, ListOrdered, ChevronDown} from "lucide-react";
 import "./youtube.css";
 
 type Song={id:string;title:string;artist:string;thumbnail:string};
@@ -8,7 +8,7 @@ const FAVORITES="favorites-v1";
 const PLAYLISTS="playlists-v1";
 function load<T>(key:string,fallback:T):T {try{const value=localStorage.getItem(key);return value?JSON.parse(value) as T:fallback}catch{return fallback}}
 function decode(s:string){if(typeof document==="undefined")return s;const el=document.createElement("textarea");el.innerHTML=s;return el.value}
-export default function YouTubeMusic({embedded=false,initialQuery="",initialSection="discover",createPlaylistSignal=0,navigationSignal=0,suggestedTrack=null,userId=""}:{userId?:string;embedded?:boolean;initialQuery?:string;initialSection?:string;createPlaylistSignal?:number;navigationSignal?:number;suggestedTrack?:({id:string;title:string;artist:string;thumbnail:string;nonce:number}|null)}){
+export default function YouTubeMusic({embedded=false,initialQuery="",initialSection="discover",createPlaylistSignal=0,navigationSignal=0,suggestedTrack=null,userId="",onOpenOffline}:{onOpenOffline?:()=>void;userId?:string;embedded?:boolean;initialQuery?:string;initialSection?:string;createPlaylistSignal?:number;navigationSignal?:number;suggestedTrack?:({id:string;title:string;artist:string;thumbnail:string;nonce:number}|null)}){
  const storageKey=(key:string)=>"spotibai-user-"+userId+"-"+key;
  const [q,setQ]=useState("");const [term,setTerm]=useState("");
  const [results,setResults]=useState<Song[]>([]);
@@ -56,7 +56,41 @@ export default function YouTubeMusic({embedded=false,initialQuery="",initialSect
   </aside>
   <main className="yt-main">
     <header className="yt-top"><a href="/" className="yt-mobile-back"><ArrowLeft size={20}/></a><span className="yt-tag"><Youtube size={17}/> YouTube Music Discovery</span><a href="/" className="yt-top-home">Spotibai home ↗</a></header>
-    <div className="yt-content">{playing&&<div className={"yt-watch-page "+(watchOpen?"":"yt-watch-minimized")}><button className="yt-watch-back" onClick={()=>setWatchOpen(false)}><ArrowLeft size={17}/> Back to music</button><div className="yt-watch-layout"><div className="yt-watch-main"><div className="yt-frame"><YouTubeVideo videoId={playing.id} title={decode(playing.title)} onEnded={nextInQueue}/></div><button className="yt-mini-expand" onClick={()=>setWatchOpen(true)}><span className="yt-dock-title">{decode(playing.title)}<small>{decode(playing.artist)}</small></span><span className="yt-dock-open">Open player ↗</span></button><h1>{decode(playing.title)}</h1><p>{decode(playing.artist)}</p><div className="yt-watch-actions"><button onClick={()=>favorite(playing)}><Heart size={17} fill={favorites.some(f=>f.id===playing.id)?"currentColor":"none"}/>{favorites.some(f=>f.id===playing.id)?"Liked":"Like song"}</button><button onClick={()=>setMenu(menu===playing.id?null:playing.id)}><Plus size={17}/> Add to playlist</button>{menu===playing.id&&<div className="yt-watch-list-menu">{Object.keys(playlists).map(name=><button key={name} onClick={()=>add(name,playing)}>{name}</button>)}<button onClick={()=>{setPendingSong(playing);setPlaylistDraft("");setPlaylistDialog(true);setMenu(null)}}>+ New playlist</button></div>}</div></div><aside className="yt-watch-next"><h2>Up next · {queueName}</h2>{[...playQueue.slice(playQueue.findIndex(x=>x.id===playing.id)+1),...playQueue.slice(0,playQueue.findIndex(x=>x.id===playing.id))].slice(0,9).map(song=><button key={song.id} onClick={()=>beginPlayback(song,playQueue,queueName)}><img src={song.thumbnail} alt=""/><span><strong>{decode(song.title)}</strong><small>{decode(song.artist)}</small></span></button>)}</aside></div></div>}{!watchOpen&&<>{embedded&&<div className="yt-embedded-tabs"><button className={section==="discover"?"active":""} onClick={()=>setSection("discover")}><Search size={16}/> Search</button><button className={section==="favorites"?"active":""} onClick={()=>setSection("favorites")}><Heart size={16}/> Favorites ({favorites.length})</button>{Object.keys(playlists).map(name=><button className={section===name?"active":""} key={name} onClick={()=>setSection(name)}><ListMusic size={16}/>{name}</button>)}<button onClick={create}><Plus size={16}/> New playlist</button></div>}
+    <div className="yt-content">
+    {playing&&<div className={"yt-watch-page yt-player-room "+(watchOpen?"":"yt-watch-minimized")}>
+      <div className="yt-player-head">
+       <button className="yt-watch-back" onClick={()=>setWatchOpen(false)} title="Return to your collection" aria-label="Back to music collection"><ArrowLeft size={21}/><span>Back to your music</span></button>
+       <div className="yt-player-now"><span className="yt-player-onair"><span/> ON AIR / SPOTIBAI</span><strong title={decode(playing.title)}>{decode(playing.title)}</strong></div>
+       <button className="yt-player-collection" onClick={()=>{setWatchOpen(false);setSection("favorites")}} title="Open saved tracks"><Heart size={17}/><span>Your collection</span></button>
+      </div>
+      <div className="yt-watch-layout">
+        <div className="yt-watch-main">
+          <div className="yt-frame"><YouTubeVideo videoId={playing.id} title={decode(playing.title)} onEnded={nextInQueue}/></div>
+          <button className="yt-mini-expand" onClick={()=>setWatchOpen(true)} aria-label={"Open player for "+decode(playing.title)}>
+             <span className="yt-dock-title">{decode(playing.title)}<small>{decode(playing.artist)}</small></span><span className="yt-dock-open">Open player <ArrowUpRight size={16}/></span>
+          </button>
+          <div className="yt-player-track-meta">
+           <div className="yt-track-disc"><Disc3 size={20}/></div>
+           <div><span className="yt-player-meta-label">CURRENTLY SPINNING</span><h1>{decode(playing.title)}</h1><p>{decode(playing.artist)}</p></div>
+          </div>
+          <div className="yt-watch-actions">
+            <button onClick={()=>{const liked=!favorites.some(s=>s.id===playing.id);favorite(playing);notify(liked?"Added to favorites":"Removed from favorites")}}><Heart size={17} fill={favorites.some(f=>f.id===playing.id)?"currentColor":"none"}/>{favorites.some(f=>f.id===playing.id)?"Liked":"Like track"}</button>
+            <button onClick={()=>setMenu(menu===playing.id?null:playing.id)} aria-expanded={menu===playing.id}><Plus size={17}/> Add to mixtape</button>
+            <button onClick={()=>{if(onOpenOffline)onOpenOffline();else notify("Open Spotibai's Offline collection to download files you own.")}} title="Download your own audio files from the offline collection"><Download size={17}/> My downloads <span className="yt-own-only">Own audio only</span></button>
+            {menu===playing.id&&<div className="yt-watch-list-menu"><strong>Save to a mixtape</strong>{Object.keys(playlists).map(name=><button key={name} onClick={()=>add(name,playing)}>{name}</button>)}<button onClick={()=>{setPendingSong(playing);setPlaylistDraft("");setPlaylistDialog(true);setMenu(null)}}><Plus size={14}/> New mixtape</button></div>}
+          </div>
+          <div className="yt-player-footnote"><span>PLAYED USING YOUTUBE'S OFFICIAL PLAYER</span><span>Downloads are available for files you own, not YouTube videos.</span></div>
+        </div>
+        <aside className="yt-watch-next">
+         <div className="yt-queue-header"><div><span className="yt-queue-kicker"><ListOrdered size={14}/> UP NEXT</span><h2>{queueName}</h2></div><span className="yt-queue-length">{Math.max(0,playQueue.length-1)} TRACKS</span></div>
+         {[...playQueue.slice(playQueue.findIndex(x=>x.id===playing.id)+1),...playQueue.slice(0,playQueue.findIndex(x=>x.id===playing.id))].map((song,i)=><button className="yt-queue-track" key={song.id} onClick={()=>beginPlayback(song,playQueue,queueName)} aria-label={"Play "+decode(song.title)}><span className="yt-queue-index">{String(i+1).padStart(2,"0")}</span><img src={song.thumbnail} alt=""/><span><strong>{decode(song.title)}</strong><small>{decode(song.artist)}</small></span><Play size={14} className="yt-queue-play"/></button>)}
+         {playQueue.length<=1&&<p className="yt-queue-empty">One track on the deck. Search for more songs to build your queue.</p>}
+        </aside>
+      </div>
+    </div>}
+    {!watchOpen&&<>
+    {playing&&<button className="yt-return-to-player" onClick={()=>setWatchOpen(true)}><span className="yt-return-pulse"/><span><small>NOW PLAYING</small><strong>{decode(playing.title)}</strong></span><span className="yt-return-call">Return to player <ArrowUpRight size={17}/></span></button>}
+    {embedded&&<div className="yt-embedded-tabs"><button className={section==="discover"?"active":""} onClick={()=>setSection("discover")}><Search size={16}/> Search</button><button className={section==="favorites"?"active":""} onClick={()=>setSection("favorites")}><Heart size={16}/> Favorites ({favorites.length})</button>{Object.keys(playlists).map(name=><button className={section===name?"active":""} key={name} onClick={()=>setSection(name)}><ListMusic size={16}/>{name}</button>)}<button onClick={create}><Plus size={16}/> New playlist</button></div>}
     <div className="yt-heading yt-editorial-heading"><div><p>THE LISTENING DESK / SPOTIBAI</p><h1>{section==="discover"?"Find the sound. Keep the feeling.":section==="favorites"?"The songs you keep.":section==="playlists"?"Your mixtape shelf.":section}</h1><span>{section==="discover"?"Search across YouTube music videos, then organize what belongs on your shelf.":section==="favorites"?"Your handpicked favorites, ready whenever you return.":section==="playlists"?"Create and name your own mixtapes.":"Your collection, arranged your way."}</span></div>{section!=="discover"&&section!=="favorites"&&section!=="playlists"&&<button className="yt-delete" onClick={removePlaylist}><Trash2 size={17}/> Delete playlist</button>}</div>
     {!embedded&&<form className="yt-search-form" onSubmit={e=>{e.preventDefault();search(q)}}><Search size={19}/><input value={q} onChange={e=>setQ(e.target.value)} placeholder="Search for songs, artists, or music videos..." aria-label="Search YouTube music"/><button type="submit" disabled={loading}>{loading?"Searching...":"Search"}</button></form>}
     {error&&<div className="yt-error">{error}</div>}

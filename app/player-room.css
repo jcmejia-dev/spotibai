@@ -1,0 +1,66 @@
+/* SPOTIBAI PLAYER ROOM — original supporting UI around official YouTube embed. */
+.spotibai-real .yt-player-room:not(.yt-watch-minimized){padding:0 0 30px;animation:yt-watch-in .22s ease both}
+.spotibai-real .yt-player-room:not(.yt-watch-minimized) .yt-player-head{display:flex;align-items:center;gap:14px;min-height:62px;padding:7px 0;margin-bottom:17px;position:sticky;top:0;z-index:45;background:color-mix(in srgb,var(--spot-bg) 95%,transparent);border-bottom:1px solid var(--spot-border);backdrop-filter:blur(12px)}
+.spotibai-real .yt-player-head .yt-watch-back{display:flex;align-items:center;justify-content:center;gap:8px;margin:0;padding:10px 13px;min-height:42px;border-radius:7px;background:var(--spot-surface-2);color:var(--spot-text);border:1px solid var(--spot-border);white-space:nowrap;font-size:12px;font-weight:800}
+.spotibai-real .yt-player-head .yt-watch-back:hover{border-color:var(--accent);color:var(--accent)}
+.yt-player-now{display:flex;flex-direction:column;min-width:0;max-width:55%;gap:2px}
+.yt-player-now strong{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--spot-text)}
+.yt-player-onair{display:flex;gap:7px;align-items:center;color:var(--accent);font-size:9px;letter-spacing:1.6px;font-weight:900}
+.yt-player-onair>span{height:7px;width:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 12px var(--accent)}
+.yt-player-collection{margin-left:auto;display:flex;gap:9px;align-items:center;border:0;background:none;color:var(--accent);font-size:12px;font-weight:800;white-space:nowrap;padding:10px}
+.spotibai-real .yt-player-room .yt-watch-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(255px,300px);gap:22px;align-items:start}
+.spotibai-real .yt-player-room .yt-watch-main{min-width:0}
+.spotibai-real .yt-player-room:not(.yt-watch-minimized) .yt-watch-main .yt-frame{border-radius:9px;border:1px solid var(--spot-border);overflow:hidden;background:#000;aspect-ratio:16/9;max-width:100%;box-shadow:0 7px 35px #0006}
+.spotibai-real .yt-player-room:not(.yt-watch-minimized) .yt-watch-main .spot-yt-host,.spotibai-real .yt-player-room:not(.yt-watch-minimized) .yt-watch-main iframe{width:100%;height:100%;display:block;aspect-ratio:16/9}
+.yt-player-track-meta{display:flex;align-items:center;gap:15px;margin:23px 0 17px;padding-bottom:19px;border-bottom:1px solid var(--spot-border)}
+.yt-track-disc{height:55px;width:55px;border-radius:50%;flex:none;background:repeating-radial-gradient(circle,#30273b 0px,#30273b 3px,#211927 4px,#211927 6px);border:3px solid color-mix(in srgb,var(--accent) 35%,#24182d);display:grid;place-items:center;color:var(--accent)}
+.yt-player-meta-label{font-size:9px;letter-spacing:2px;font-weight:900;color:var(--accent)}
+.spotibai-real .yt-player-track-meta h1{font:800 clamp(19px,2.2vw,30px) Outfit,Arial,sans-serif;letter-spacing:-.7px;line-height:1.2;margin:7px 0 5px;color:var(--spot-text)}
+.spotibai-real .yt-player-track-meta p{margin:0;color:var(--spot-muted);font-size:13px}
+.spotibai-real .yt-player-room:not(.yt-watch-minimized) .yt-watch-actions{display:flex;gap:8px;flex-wrap:wrap;position:relative}
+.spotibai-real .yt-player-room:not(.yt-watch-minimized) .yt-watch-actions>button{display:flex;align-items:center;gap:9px;border:1px solid var(--spot-border);background:var(--spot-surface-2);color:var(--spot-text);border-radius:8px;padding:11px 14px;font-size:12px;font-weight:800;transition:border-color .2s,background .2s}
+.spotibai-real .yt-player-room:not(.yt-watch-minimized) .yt-watch-actions>button:hover{border-color:var(--accent);background:var(--spot-wash)}
+.yt-own-only{font-size:9px;color:var(--spot-muted);font-weight:400}
+.yt-player-footnote{margin-top:19px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:9px;line-height:1.5;letter-spacing:.6px;color:var(--spot-muted)}
+.yt-player-room .yt-watch-next{background:var(--spot-surface);border:1px solid var(--spot-border);border-radius:10px;padding:17px 13px 12px;min-width:0}
+.yt-queue-header{display:flex;align-items:start;gap:9px;justify-content:space-between;padding:2px 7px 15px;border-bottom:1px solid var(--spot-border);margin-bottom:7px}
+.yt-queue-kicker{display:flex;align-items:center;gap:7px;color:var(--accent);font-size:9px;font-weight:900;letter-spacing:1.7px}
+.yt-player-room .yt-watch-next h2{font:800 19px Outfit,Arial,sans-serif;letter-spacing:-.3px;color:var(--spot-text);margin:7px 0 0}
+.yt-queue-length{white-space:nowrap;font-size:9px;color:var(--spot-muted);font-weight:800;letter-spacing:.7px;padding-top:4px}
+.yt-player-room .yt-watch-next button.yt-queue-track{display:flex;align-items:center;gap:11px;padding:11px 7px;border-bottom:1px solid var(--spot-border);color:var(--spot-text);border-radius:6px;transition:background .2s}
+.yt-player-room .yt-watch-next button.yt-queue-track:hover{background:var(--spot-wash)}
+.yt-player-room .yt-watch-next button.yt-queue-track img{flex:0 0 68px;width:68px;height:50px;object-fit:cover;border-radius:6px}
+.yt-player-room .yt-watch-next button.yt-queue-track strong{font-size:11px;font-weight:800;line-height:1.35}
+.yt-player-room .yt-watch-next button.yt-queue-track small{color:var(--spot-muted)}
+.yt-queue-index{flex:0 0 20px;font-size:10px;color:var(--spot-muted);font-variant-numeric:tabular-nums}
+.yt-queue-play{flex:0 0 15px;margin-left:auto;color:var(--accent);opacity:0}
+.yt-player-room .yt-watch-next button.yt-queue-track:hover .yt-queue-play{opacity:1}
+.yt-queue-empty{font-size:12px;line-height:1.6;color:var(--spot-muted);padding:16px}
+.yt-return-to-player{width:100%;display:flex;align-items:center;gap:13px;padding:12px 16px;margin:0 0 16px;border:1px solid color-mix(in srgb,var(--accent) 60%,var(--spot-border));border-left:4px solid var(--accent);border-radius:9px;background:linear-gradient(110deg,color-mix(in srgb,var(--accent) 12%,var(--spot-surface)),var(--spot-surface));color:var(--spot-text);text-align:left;min-width:0;cursor:pointer}
+.yt-return-to-player>span:nth-child(2){display:flex;flex-direction:column;min-width:0;flex:1;gap:4px}
+.yt-return-to-player small{font-size:9px;letter-spacing:1.5px;color:var(--accent);font-weight:900}
+.yt-return-to-player strong{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.yt-return-pulse{display:block;width:9px;height:9px;background:var(--accent);box-shadow:0 0 13px var(--accent);border-radius:50%;flex:none}
+.yt-return-call{display:flex;align-items:center;gap:4px;font-weight:800;color:var(--accent);font-size:11px;white-space:nowrap}
+.spotibai-real .yt-watch-minimized .yt-player-head,.spotibai-real .yt-watch-minimized .yt-player-track-meta,.spotibai-real .yt-watch-minimized .yt-player-footnote{display:none!important}
+.spotibai-real .yt-watch-minimized .yt-watch-next{display:none!important}
+.spotibai-real .yt-watch-minimized .yt-watch-layout{display:flex!important;grid-template-columns:none!important}
+.spotibai-real .yt-watch-minimized .yt-mini-expand{margin:0}
+.spotibai-real .yt-watch-minimized .yt-dock-open{display:flex;align-items:center;gap:4px}
+@media(max-width:1100px){.spotibai-real .yt-player-room .yt-watch-layout{grid-template-columns:minmax(0,1fr) 240px;gap:12px}.yt-player-room .yt-watch-next button.yt-queue-track img{width:56px;flex-basis:56px;height:41px}.yt-player-room .yt-queue-index{display:none}}
+@media(max-width:920px){.spotibai-real .yt-player-room .yt-watch-layout{grid-template-columns:1fr;gap:20px}.yt-player-room .yt-watch-next{margin:0}.spotibai-real .yt-player-room:not(.yt-watch-minimized) .yt-player-head{top:0}}
+@media(max-width:600px){
+ .spotibai-real .yt-player-room:not(.yt-watch-minimized) .yt-player-head{padding:6px 0;gap:7px;min-height:54px;margin-bottom:13px}
+ .spotibai-real .yt-player-head .yt-watch-back{height:39px;width:39px;min-height:39px;padding:0;border-radius:50%}
+ .spotibai-real .yt-player-head .yt-watch-back>span{display:none}
+ .yt-player-now{max-width:65%}.yt-player-now strong{font-size:10px}.yt-player-onair{font-size:8px}
+ .yt-player-collection{padding:7px}.yt-player-collection span{display:none}
+ .spotibai-real .yt-player-track-meta{gap:11px;margin-top:16px}
+ .yt-track-disc{height:43px;width:43px}
+ .spotibai-real .yt-player-track-meta h1{font-size:17px}
+ .yt-own-only{display:none}
+ .yt-return-call{font-size:0}.yt-return-call svg{height:20px;width:20px}
+ .yt-player-room .yt-watch-next button.yt-queue-track img{flex-basis:63px;width:63px;height:47px}
+ .yt-player-room .yt-watch-next .yt-queue-index{display:block}
+}
+@media(prefers-reduced-motion:reduce){.yt-return-to-player{transition:none}}
