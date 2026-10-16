@@ -184,8 +184,22 @@ export default function YouTubeMusic({embedded=false,initialQuery="",initialSect
  </div>
 }
 
-type YTPlayer={destroy:()=>void;pauseVideo:()=>void;playVideo:()=>void};
-type YTNamespace={Player:new (element:HTMLElement,options:{videoId:string;playerVars:Record<string,number>;events:{onReady?:(event:unknown)=>void;onStateChange:(event:{data:number})=>void;onError:(event:{data:number})=>void}})=>YTPlayer};
+type YTPlayer={
+ destroy:()=>void;
+ pauseVideo:()=>void;
+ playVideo:()=>void;
+ loadVideoById:(videoId:string)=>void;
+};
+type YTNamespace={Player:new (element:HTMLElement,options:{
+ videoId:string;
+ playerVars:Record<string,number>;
+ events:{
+  onReady?:(event:unknown)=>void;
+  onStateChange:(event:{data:number})=>void;
+  onAutoplayBlocked?:()=>void;
+  onError:(event:{data:number})=>void;
+ };
+})=>YTPlayer};
 declare global{interface Window{YT?:YTNamespace;onYouTubeIframeAPIReady?:()=>void}}
 let youtubeReady:Promise<YTNamespace>|undefined;
 function getYouTubeAPI():Promise<YTNamespace>{
@@ -195,27 +209,108 @@ function getYouTubeAPI():Promise<YTNamespace>{
   const previous=window.onYouTubeIframeAPIReady;
   window.onYouTubeIframeAPIReady=()=>{previous?.();if(window.YT?.Player)resolve(window.YT);else reject(new Error("YouTube API unavailable"))};
   if(!document.querySelector('script[src="https://www.youtube.com/iframe_api"]')){
-   const script=document.createElement("script");script.src="https://www.youtube.com/iframe_api";script.async=true;script.onerror=()=>reject(new Error("Unable to load YouTube player"));document.head.appendChild(script);
+   const script=document.createElement("script");
+   script.src="https://www.youtube.com/iframe_api";
+   script.async=true;
+   script.onerror=()=>{youtubeReady=undefined;reject(new Error("Unable to load YouTube player"))};
+   document.head.appendChild(script);
   }
  });
  return youtubeReady;
 }
-function YouTubeVideo({videoId,title,active,onEnded}:{videoId:string;title:string;active:boolean;onEnded:()=>void}){
+
+/** One official YouTube iframe per listening session.
+ * Do not destroy/recreate it between songs: loadVideoById advances the queue.
+ */
+function YouTubeVideo({videoId,title,active,onEnded}:{
+ videoId:string;title:string;active:boolean;onEnded:()=>void
+}){
  const host=useRef<HTMLDivElement>(null);
  const ended=useRef(onEnded);
  const playerRef=useRef<YTPlayer|null>(null);
+ const readyRef=useRef(false);
+ const desiredIdRef=useRef(videoId);
+ const loadedIdRef=useRef(videoId);
  const activeRef=useRef(active);
+ const [autoplayBlocked,setAutoplayBlocked]=useState(false);
+ const [playerError,setPlayerError]=useState("");
+
  useEffect(()=>{ended.current=onEnded},[onEnded]);
- useEffect(()=>{activeRef.current=active;try{if(active)playerRef.current?.playVideo();else playerRef.current?.pauseVideo()}catch{}},[active]);
+
+ // Playlist playback intentionally pauses when the full player is closed.
  useEffect(()=>{
-  let disposed=false;let player:YTPlayer|undefined;
+  activeRef.current=active;
+  if(!readyRef.current)return;
+  try{
+   if(active)playerRef.current?.playVideo();
+   else playerRef.current?.pauseVideo();
+  }catch{}
+ },[active]);
+
+ // When the next song starts, keep the same YouTube iframe alive.
+ useEffect(()=>{
+  desiredIdRef.current=videoId;
+  setAutoplayBlocked(false);setPlayerError("");
+  if(!readyRef.current||!playerRef.current||loadedIdRef.current===videoId)return;
+  loadedIdRef.current=videoId;
+  try{
+   playerRef.current.loadVideoById(videoId);
+   if(!activeRef.current)playerRef.current.pauseVideo();
+  }catch{setAutoplayBlocked(true)}
+ },[videoId]);
+
+ useEffect(()=>{
+  let disposed=false;
   getYouTubeAPI().then(YT=>{
    if(disposed||!host.current)return;
-   const element=document.createElement("div");host.current.replaceChildren(element);
-   player=new YT.Player(element,{videoId,playerVars:{autoplay:1,playsinline:1,rel:0},events:{onReady:()=>{if(!activeRef.current)try{player?.pauseVideo()}catch{}},onStateChange:event=>{if(event.data===0)ended.current()},onError:()=>{}}});
+   const el=document.createElement("div");
+   host.current.replaceChildren(el);
+   const initialId=desiredIdRef.current;
+   const player=new YT.Player(el,{
+    videoId:initialId,
+    playerVars:{autoplay:1,playsinline:1,rel:0},
+    events:{
+     onReady:()=>{
+      if(disposed)return;
+      readyRef.current=true;
+      if(desiredIdRef.current!==initialId){
+       loadedIdRef.current=desiredIdRef.current;
+       try{player.loadVideoById(desiredIdRef.current)}catch{setAutoplayBlocked(true)}
+      }
+      try{if(activeRef.current)player.playVideo();else player.pauseVideo()}catch{setAutoplayBlocked(true)}
+     },
+     onStateChange:event=>{
+      if(disposed)return;
+      if(event.data===1){setAutoplayBlocked(false);setPlayerError("")}
+      if(event.data===0&&activeRef.current)ended.current();
+     },
+     onAutoplayBlocked:()=>{if(!disposed&&activeRef.current)setAutoplayBlocked(true)},
+     onError:event=>{
+      if(disposed)return;
+      setPlayerError(event.data===100||event.data===101||event.data===150
+       ?"This video is unavailable for embedded playback. Choose another from Up Next."
+       :"Unable to play this video right now.");
+     }
+    }
+   });
    playerRef.current=player;
-  }).catch(()=>{});
-  return()=>{disposed=true;playerRef.current=null;try{player?.destroy()}catch{}};
- },[videoId]);
- return <div className="spot-yt-host" ref={host} aria-label={title}/>;
+   loadedIdRef.current=initialId;
+  }).catch(()=>{if(!disposed)setPlayerError("YouTube player could not load. Check your connection and retry.")});
+
+  return()=>{
+   disposed=true;
+   readyRef.current=false;
+   const player=playerRef.current;
+   playerRef.current=null;
+   try{player?.destroy()}catch{}
+  };
+ },[]);
+
+ return <div className="yt-video-shell">
+  <div className="spot-yt-host" ref={host} aria-label={title}/>
+  {active&&(autoplayBlocked||playerError)&&<div className="yt-video-continue" role="status">
+   <span>{playerError||"Your browser paused automatic playback. Tap to continue."}</span>
+   <button type="button" onClick={()=>{setAutoplayBlocked(false);setPlayerError("");try{playerRef.current?.playVideo()}catch{setAutoplayBlocked(true)}}}>Play music</button>
+  </div>}
+ </div>;
 }
