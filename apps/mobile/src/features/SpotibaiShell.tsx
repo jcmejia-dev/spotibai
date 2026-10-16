@@ -73,7 +73,6 @@ export default function SpotibaiShell(){
       </View>}
       onNavigationStateChange={(s:WebViewNavigation)=>{setCanGoBack(s.canGoBack);if(!s.loading)setLoading(false)}}
       onError={loadError}
-      onHttpError={e=>{if(e.nativeEvent.statusCode>=400&&e.nativeEvent.url.startsWith(site))loadError()}}
     />}
    </View>:<View style={{flex:1}}><SpotibaiComplete/></View>}
    {/* Minimal native mode switch, never fakes being part of the original website. */}
