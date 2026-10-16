@@ -1,17 +1,16 @@
-# Spotibai Hybrid Android App — Full UI Parity
+# Spotibai Android — One main app, original UI
 
-This Expo SDK 58 build has two modes:
+Spotibai now opens **the actual original website** as the sole main UI inside Expo WebView. There is no second, redesigned tabbed app or Original/Native mode switch.
 
-**Original Spotibai (default):** the *actual current web application* displayed inside an Android WebView, including its existing responsive UI, Neon sign-in/guest flow, playlists, favorites, YouTube video player and web offline vault. This is intentionally a **hybrid app**, not a claim that the website was rewritten into native React Native.
+- The **Install App** prompt is hidden in the Android wrapper only (not the public website).
+- A small **♫** button is injected next to the existing profile/header actions. It opens the native **Audius background audio** sheet; tapping Done hides the sheet without stopping playback.
+- Stream Audius tracks via the original Spotibai API with `expo-audio`, artist-authorized downloads, and imported owned audio.
+- Native playlist/music files are device-local and independent of the website's browser-local collection.
+- **YouTube background playback is unsupported**: YouTube API policies disallow keeping the embedded player running when the app is minimized or the screen locked.
+- Background audio requires a **built Android APK** with the `expo-audio` config plugin and active lock-screen controls. Expo Go is insufficient to validate this functionality.
 
-**Native audio & offline:** the separate React Native tools built with Expo Audio, AsyncStorage, and FileSystem for Audius music streaming, authorized downloading, local files, and a separate native collection.
+## Launch in Expo Go for UI testing
 
-These modes **do not sync their favorites or playlists**: the original site uses browser localStorage while native uses AsyncStorage. A common database and native Neon session are needed for true cross-device syncing.
-
-## YouTube error 153
-The earlier native app loaded a bare `youtube-nocookie.com/embed` page without a Referer, which YouTube rejects. The native player now uses an HTML iframe wrapper with `baseUrl` (the configured Spotibai domain) and `strict-origin-when-cross-origin`. The original website loads from its normal HTTPS origin and embeds YouTube in a browser-like context. Some videos disallow embedding; users can open them directly on YouTube. YouTube audio cannot be ripped, downloaded, or played as hidden background audio.
-
-## Running
 ```powershell
 cd C:\Users\pc\OneDrive\Documents\Projects\spotibai
 git pull --ff-only origin feat/spotibai-music-ui
@@ -20,8 +19,17 @@ npm install
 npx expo start --clear --port 8082
 ```
 
-Test both Original Spotibai mode and Native audio & offline mode on device.
+## Build APK to test background music
 
-If the Vercel domain changed, update the API address under **Native audio & offline > Settings**. Restart/switch modes to load the new domain.
+```powershell
+cd apps/mobile
+npx eas-cli@latest login
+npx eas-cli@latest build:configure
+npx eas-cli@latest build --platform android --profile preview
+```
 
-Expo Go is for testing. Native Android background audio/lock screen controls require a properly configured EAS dev/standalone build and real device testing. The hybrid web screen does not become an offline native app merely because it is inside an APK.
+The build runs via Expo EAS (requires Expo account, project association, Android signing). Install the resulting APK on your phone, then test an Audius song with screen locked. EAS builds can take time and account quotas apply.
+
+If the website is missing, confirm the production domain `spotibai-delta.vercel.app` or adjust `EXPO_PUBLIC_SPOTIBAI_API_URL` before building. The native audio API uses the same domain as the displayed site. No server-side credentials should be placed in `EXPO_PUBLIC_` variables.
+
+**Current limitation**: The app relies on the hosted website and does not deliver full native/offline UI. The original browser's playlists/favorites do not automatically synchronize with Audius downloads. 
