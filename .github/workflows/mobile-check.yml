@@ -15,11 +15,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: npm
-          cache-dependency-path: apps/mobile/package-lock.json
-      - name: Install
+      - name: Install latest declared Expo dependencies
         working-directory: apps/mobile
-        run: npm ci --no-audit --no-fund
+        run: npm install --no-audit --no-fund
       - name: Type-check
         working-directory: apps/mobile
         run: npx tsc --noEmit

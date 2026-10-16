@@ -1,2 +1,2 @@
-import SpotibaiNative from '../features/SpotibaiNative';
-export default function HomeScreen(){return <SpotibaiNative/>;}
+import SpotibaiComplete from '../features/SpotibaiComplete';
+export default function HomeScreen(){return <SpotibaiComplete/>;}

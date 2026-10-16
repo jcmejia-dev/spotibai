@@ -31,6 +31,14 @@
           "image": "./assets/images/spotibai-icon.png",
           "imageWidth": 110
         }
+      ],
+      [
+        "expo-audio",
+        {
+          "enableBackgroundPlayback": true,
+          "enableBackgroundRecording": false,
+          "recordAudioAndroid": false
+        }
       ]
     ],
     "experiments": {

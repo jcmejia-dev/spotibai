@@ -1,31 +1,31 @@
-# Spotibai Native (Expo SDK 58)
+# Spotibai mobile parity (Expo 58)
+This app is a native React Native music app separate from the Next.js website.
 
-Real React Native app in the same repository as the Spotibai Next.js website.
-
-## Test with Expo Go
-
+## Install and run
 ```powershell
 cd apps/mobile
 npm install
 npx expo start --clear
 ```
+Expo Go SDK 58 supports testing UI, Audius native audio, file selection and WebView.
 
-Scan the QR in Expo Go for SDK 58.
+## Native features
+- YouTube Data API music search, 50-result pagination, artist-based Up Next queue
+- Official YouTube embedded visible video player (not background audio or offline downloading)
+- Audius streaming with expo-audio playback controls, seek, next/previous, repeat
+- Mixed-source favorites and mixtapes (create, rename, remove, delete)
+- Persistent native local library, preferences and recent searches using AsyncStorage
+- Local owned audio import; artist-authorized Audius download and offline playback
+- Dark/light themes, multiple accent colors, subtle screen transitions
+- Full original website accessible from Settings for Neon sign-in and web-only collection
 
-## Included in this first milestone
+## Important scope
+Native collections are saved on this device, not shared with the browser. The existing web app stores its data in browser localStorage, even after Neon login. Neon session and playlists **are not synchronized to the native app**. Full website tab lets users access their original web experience in the meantime.
+On Android, sustained background playback/lock-screen controls require an EAS development/standalone APK with the expo-audio config plugin; Expo Go is insufficient. YouTube videos must remain visible and user controlled.
+When the Vercel hostname changes, use Profile > API address and enter the current public HTTPS production URL.
 
-- Native listening-room Home with Spotibai logo, cassette, and interactive mood shortcuts
-- Native Discover screen using the existing public Spotibai Audius search API
-- Session-only favorites (not yet synced or persisted)
-- Offline information screen
-- Functional native light/dark themes and accent selection
-- Native tab navigation and transition
+## Offline and consent
+Only local files chosen by the user and server-verified artist-authorized Audius tracks can be downloaded. Never download YouTube media with this app.
 
-## Not implemented yet
-
-Neon native sign-in; persistent favorites/playlists; native audio streaming; authorized offline downloads; background and lock-screen controls. No YouTube streaming or download bypass is implemented.
-
-The API endpoint is configured with `EXPO_PUBLIC_SPOTIBAI_API_URL`.
-Use a **public HTTPS URL**, not a Neon secret. If you changed the Vercel domain, update this setting.
-
-Native audio and background playback will need `expo-audio` and a development/standalone build. The current app remains Expo Go compatible.
+## Before APK
+Test on Android Expo Go, then run `eas build --profile preview --platform android` with a suitable eas.json profile and a properly configured Expo/EAS project.
