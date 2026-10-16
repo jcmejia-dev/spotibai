@@ -5,6 +5,7 @@ import YouTubeMusic from "./youtube/page";
 import AuthGate from "./components/AuthGate";
 import {authClient} from "../lib/auth/client";
 import OfflineVault from "./components/OfflineVault";
+import ListeningRoomHome from "./components/ListeningRoomHome";
 type User={id:string;name:string;email:string;isGuest?:boolean};
 
 type Screen="home"|"search"|"favorites"|"playlists"|"offline"|"profile";
@@ -49,7 +50,7 @@ function Spotibai({user,exitGuest}:{user:User;exitGuest:()=>void}){
  useLayoutEffect(()=>{if(scrollArea.current)scrollArea.current.scrollTop=0},[screen]);
  const heading=(name:string)=>{find(name)};
  return <div className={"app spotibai-real theme-"+mode+(motion?"":" no-motion")} style={{"--accent":accent} as React.CSSProperties}>
- <aside className={"sidebar "+(drawer?"show":"")}>
+ <aside className="sidebar">
   <div className="brand"><img className="spotibai-logo-icon" src="/spotibai-icon.png" alt="Spotibai icon"/><span>spotibai<span className="brand-dot">.</span></span><button className="mobile-close icon-button" onClick={()=>setDrawer(false)} aria-label="Close menu"><X size={20}/></button></div>
   <div className="sidebar-heading">MENU</div>
   <nav className="nav">
@@ -62,9 +63,10 @@ function Spotibai({user,exitGuest}:{user:User;exitGuest:()=>void}){
   </nav>
   <div className="sidebar-bottom"><div className="side-promo"><span className="promo-spark"><Disc3 size={21}/></span><strong>Make it yours.</strong><p>Find music on YouTube, favorite the songs you enjoy, and build playlists.</p><button onClick={()=>go("search")}>Explore music <ArrowRight size={15}/></button></div><span className="sidebar-foot">Spotibai · Your sound, your space</span></div>
  </aside>
- {drawer&&<div className="mobile-shade" onClick={()=>setDrawer(false)}/>}
+
  <main className="main">
   <header className="topbar">
+   <button className="mobile-wordmark" onClick={()=>go("home")} aria-label="Spotibai Home"><img src="/spotibai-icon.png" alt=""/><span>spotibai<span className="brand-dot">.</span></span><small>YOUR LISTENING ROOM</small></button>
    <div className="history"><button className="menu-toggle icon-button" onClick={()=>setDrawer(true)} aria-label="Open menu"><Menu size={21}/></button><button className="circle" onClick={()=>go("home")} aria-label="Go home"><ArrowLeft size={17}/></button><button className="circle" onClick={()=>go("search")} aria-label="Go to search"><ArrowRight size={17}/></button></div>
    <div className="spot-search-wrap" ref={searchBox}>
     <form className="searchbox" onSubmit={e=>{e.preventDefault();find(selectedSuggestion>=0&&suggestions[selectedSuggestion]?suggestions[selectedSuggestion].title:query)}}><Search size={18}/><input aria-label="Search YouTube music" value={query} placeholder="Search for songs or artists..." autoComplete="off" onFocus={()=>{setSuggestOpen(true);setSelectedSuggestion(-1);go("search")}} onChange={e=>{setQuery(e.target.value);setSelectedSuggestion(-1);setSuggestOpen(true)}} onKeyDown={e=>{if(e.key==="Escape"){setSuggestOpen(false);e.currentTarget.blur()}else if(e.key==="ArrowDown"){e.preventDefault();setSelectedSuggestion(v=>Math.min(v+1,suggestions.length-1))}else if(e.key==="ArrowUp"){e.preventDefault();setSelectedSuggestion(v=>Math.max(v-1,-1))}}}/><button type="submit" className="top-search-submit" aria-label="Search"><Search size={16}/></button></form>
@@ -79,25 +81,7 @@ function Spotibai({user,exitGuest}:{user:User;exitGuest:()=>void}){
   </header>
   <div className="scroll-content" ref={scrollArea}>
    {!online&&<div className="spot-connection-notice" role="status"><WifiOff size={16}/> Offline now — your saved collection and on-device audio remain available. Streaming and search need an internet connection. <button onClick={()=>go("offline")}>Open offline library →</button></div>}
-   {screen==="home"&&<div className="spotibai-home-enter listening-room">
-    <section className="room-stage">
-      <div className="room-light"/>
-      <div className="room-intro"><div className="room-kicker"><span className="room-led"/> SPOTIBAI / LISTENING ROOM <span className="room-issue">VOL. 001</span></div><h1>Your room.<br/><em>Your soundtrack.</em></h1><p>Drop the needle. Find your next favorite and keep a little music in the room.</p><div className="room-intro-actions"><button onClick={()=>go("search")}><Search size={17}/> Find a record <ArrowRight size={16}/></button><button onClick={()=>go("playlists")}><ListMusic size={17}/> Open your collection</button></div></div>
-      <div className="room-console" aria-hidden="true"><div className="room-plinth"><div className="room-turntable"><div className="room-record"><div className="room-record-label"><Music2 size={27}/></div></div><div className="room-arm"><div className="room-arm-joint"/><div className="room-arm-stick"/><div className="room-cartridge"/></div><div className="room-control-knob"/></div><div className="room-console-footer"><span>SPOTIBAI HI-FI</span><span>33⅓ RPM • STEREO</span><div className="room-tiny-light"/></div></div></div>
-      <div className="room-ground-line"/>
-    </section>
-    <div className="room-section-heading"><div><span className="room-overline">THE RECORD CRATE</span><h2>Pick a mood, press play.</h2></div><button onClick={()=>go("search")}>Browse music <ArrowRight size={16}/></button></div>
-    <div className="room-crates">
-      {[{name:"AFTER HOURS",subtitle:"Quiet streets, loud thoughts",term:"late night chill r&b music",color:"violet",symbol:"01"},{name:"LOUD & CLEAR",subtitle:"Turn the room up",term:"hip hop hits music",color:"orange",symbol:"02"},{name:"SLOW MOTION",subtitle:"A little breathing room",term:"lofi mellow chill music",color:"blue",symbol:"03"},{name:"ON REPEAT",subtitle:"The one you never skip",term:"popular songs playlist",color:"lime",symbol:"04"}].map(item=><button className={"room-crate "+item.color} key={item.name} onClick={()=>heading(item.term)}><span className="room-crate-top"><span>SPOTIBAI SELECTS</span><span>{item.symbol} / 04</span></span><span className="room-crate-groove"/><span className="room-crate-bottom"><strong>{item.name}</strong><small>{item.subtitle}</small><ArrowRight size={18}/></span></button>)}
-    </div>
-    <div className="room-section-heading"><div><span className="room-overline">YOUR OWN CORNER</span><h2>On your shelf.</h2></div></div>
-    <div className="room-shelf">
-      <button className="room-shelf-item" onClick={()=>go("favorites")}><span className="room-shelf-art heart"><Heart size={31}/></span><span><small>THE KEEPSAKES</small><strong>Liked records</strong><span>Everything worth keeping close.</span></span><ArrowRight size={19}/></button>
-      <button className="room-shelf-item" onClick={()=>go("playlists")}><span className="room-shelf-art tapes"><CassetteTape size={35}/></span><span><small>THE MIXTAPES</small><strong>Your playlists</strong><span>Handpicked, side A to side B.</span></span><ArrowRight size={19}/></button>
-    </div>
-    <section className="room-offline-entry"><div><Download size={20}/><span><strong>Take your own music anywhere.</strong><small>Keep music files you own on this device, even without Wi-Fi.</small></span></div><button onClick={()=>go("offline")}>Open offline library <ArrowRight size={16}/></button></section>
-    <footer className="room-footer"><Headphones size={17}/><span>GOOD MUSIC. GOOD COMPANY. NO RUSH.</span><Radio size={17}/></footer>
-   </div>}
+   {screen==="home"&&<ListeningRoomHome onNavigate={go} onSearch={heading} />}
    {screen==="offline"&&<OfflineVault userId={user.id}/>}
    {screen==="profile"&&<section className="spot-settings studio-preferences search-view-enter">
  <div className="studio-settings-header"><div><span className="studio-eyebrow">SPOTIBAI / STUDIO SETTINGS</span><h1>Your space, your sound.</h1><p>Set the atmosphere of your listening room.</p></div><SlidersHorizontal size={27}/></div>
@@ -110,5 +94,12 @@ function Spotibai({user,exitGuest}:{user:User;exitGuest:()=>void}){
  <div className={"search-view-enter "+(screen==="home"||screen==="profile"||screen==="offline"?"spot-view-hidden":"") }><YouTubeMusic userId={user.id} embedded initialQuery={submitted} initialSection={screen==="favorites"?"favorites":screen==="playlists"?"playlists":"discover"} createPlaylistSignal={newPlaylist} navigationSignal={navigationSignal} suggestedTrack={suggestPlay}/></div>
   </div>
  </main>
+ <nav className="spot-mobile-tabs" aria-label="Primary navigation">
+  <button aria-current={screen==="home"?"page":undefined} onClick={()=>go("home")}><Home size={21}/><span>Room</span></button>
+  <button aria-current={screen==="search"?"page":undefined} onClick={()=>go("search")}><Search size={21}/><span>Discover</span></button>
+  <button aria-current={screen==="favorites"?"page":undefined} onClick={()=>go("favorites")}><Heart size={21}/><span>Liked</span></button>
+  <button aria-current={screen==="playlists"?"page":undefined} onClick={()=>go("playlists")}><ListMusic size={21}/><span>Mixtapes</span></button>
+  <button aria-current={screen==="offline"?"page":undefined} onClick={()=>go("offline")}><Download size={21}/><span>Offline</span></button>
+ </nav>
  </div>
 }
