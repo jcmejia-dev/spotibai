@@ -29,7 +29,7 @@ return <View style={{flexDirection:'row',gap:11,alignItems:'center',paddingVerti
 </View>;
 }
 const clock=(n=0)=>Number.isFinite(n)?Math.floor(n/60)+':'+String(Math.floor(n%60)).padStart(2,'0'):'0:00';
-export default function NativeAudioPanel({visible,onClose,api,stopSignal}:{visible:boolean;onClose:()=>void;api:string;stopSignal:number}){
+export default function NativeAudioPanel({visible,onClose,api,stopSignal,onOpenSleepTimer,sleepRemainingMs}:{visible:boolean;onClose:()=>void;api:string;stopSignal:number;onOpenSleepTimer:()=>void;sleepRemainingMs:number}){
  const [query,setQuery]=useState('');
  const [results,setResults]=useState<Song[]>([]);
  const [saved,setSaved]=useState<Song[]>([]);
@@ -135,7 +135,7 @@ export default function NativeAudioPanel({visible,onClose,api,stopSignal}:{visib
   <View style={{height:63,paddingHorizontal:19,flexDirection:'row',alignItems:'center',justifyContent:'space-between',borderBottomWidth:1,borderBottomColor:'#3d2c47'}}>
    <View><Text style={{fontSize:10,color:A,letterSpacing:1.6,fontWeight:'900'}}>SPOTIBAI / BACKGROUND AUDIO</Text>
     <Text style={{color:T,fontSize:21,fontWeight:'900',letterSpacing:-.7,marginTop:5}}>Listen without video.</Text></View>
-   <Btn label="Done ✕" onPress={onClose}/>
+   <View style={{flexDirection:'row',gap:7,alignItems:'center'}}><Btn label={sleepRemainingMs>0?'⏲ '+Math.ceil(sleepRemainingMs/60000)+'m':'⏲ Timer'} onPress={onOpenSleepTimer}/><Btn label="Done ✕" onPress={onClose}/></View>
   </View>
   <ScrollView keyboardShouldPersistTaps="handled" style={{flex:1}} contentContainerStyle={{paddingHorizontal:19,paddingBottom:25}}>
    <Text style={{color:M,fontSize:12,lineHeight:19,marginTop:15}}>Play Audius music using native Android audio. Lock-screen controls require a standalone APK. YouTube videos remain foreground-only.</Text>

@@ -33,3 +33,12 @@ The build runs via Expo EAS (requires Expo account, project association, Android
 If the website is missing, confirm the production domain `spotibai-delta.vercel.app` or adjust `EXPO_PUBLIC_SPOTIBAI_API_URL` before building. The native audio API uses the same domain as the displayed site. No server-side credentials should be placed in `EXPO_PUBLIC_` variables.
 
 **Current limitation**: The app relies on the hosted website and does not deliver full native/offline UI. The original browser's playlists/favorites do not automatically synchronize with Audius downloads. 
+
+## Sleep timer (Oct 2026)
+- Tap the ⏲ icon in the original Spotibai app header, or Timer in the Audius player.
+- Presets: 5, 15, 30, 45, 60, 90 minutes. Custom 1–480 minutes.
+- Visible remaining countdown, replace duration, cancel anytime.
+- Deadline stored on the device, calculated from wall-clock time to avoid countdown drift.
+- When it expires, pauses native Audius audio and reloads the embedded website to stop YouTube and HTML audio. The website may return to its initial page; locally saved favorites/mixtapes remain stored.
+- This is best-effort: Android can suspend JavaScript and timers in the background. Exact sleep-time stopping with screen locked is **not guaranteed** until a native foreground-service/alarm implementation is built and device-tested. Expo Go cannot test sustained background audio.
+- The public website is unchanged. Timer is only present inside the Expo Android wrapper.
