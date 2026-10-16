@@ -63,7 +63,8 @@ export default function NativeAudioPanel({visible,onClose,api,stopSignal}:{visib
    if(song.local&&!new File(path).exists)throw Error('Saved file is missing; please import it again');
    current.current=song;setActive(song);setQueue(list.length?list:[song]);setMessage('');setError('');
    audio.replace(path);
-   audio.setActiveForLockScreen(true,{title:song.title,artist:song.artist,albumTitle:'Spotibai',artworkUrl:song.art||undefined},{showNextTrack:true,showPreviousTrack:true});
+   // Expo Go may not have the media foreground service. Playback should still be testable.
+   try{audio.setActiveForLockScreen(true,{title:song.title,artist:song.artist,albumTitle:'Spotibai',artworkUrl:song.art||undefined},{showNextTrack:true,showPreviousTrack:true})}catch{}
    audio.play();
   }catch(e){setError(e instanceof Error?e.message:'Unable to play this track')}
  }
