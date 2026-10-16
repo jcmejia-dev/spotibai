@@ -324,7 +324,7 @@ export default function SpotibaiNative(){
  }
 
  return <SafeAreaView edges={['top','bottom']} style={{flex:1,backgroundColor:c.bg}}>
-  <StatusBar backgroundColor={c.bg} barStyle={mode==='dark'?'light-content':'dark-content'}/>
+  <StatusBar barStyle={mode==='dark'?'light-content':'dark-content'}/>
   <Top/>
   <View style={{flex:1}}>
    <Animated.View style={{flex:1,opacity:fade}}>
