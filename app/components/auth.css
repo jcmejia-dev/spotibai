@@ -20,3 +20,5 @@
 @keyframes spot-auth-rotate{from{opacity:0;transform:rotate(-240deg) scale(.7)}to{opacity:1;transform:rotate(360deg) scale(1)}}
 @media(prefers-reduced-motion:reduce){.spot-auth-spin{animation:none}}
 @media(max-width:500px){.spot-auth-card{padding:24px}}
+
+.spot-guest-button{width:100%;display:flex;align-items:center;justify-content:space-between;margin-top:13px;border:1px solid #665080;border-radius:10px;padding:14px 15px;color:#e2cef7;background:transparent;font-weight:750;cursor:pointer}.spot-guest-button:hover{background:#2b1f3a}.spot-guest-hint{font-size:11px!important;margin:9px 0 0!important;color:#a995b9!important;text-align:center}

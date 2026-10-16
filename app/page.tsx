@@ -1,15 +1,19 @@
 "use client";
 import {useEffect,useLayoutEffect,useRef,useState} from "react";
-import {ArrowLeft, ArrowRight, Disc3, Heart, Home, Library, ListMusic, Menu, Music2, Plus, Search, X, Settings2, Check, Clock3, Radio, Headphones, CassetteTape, SlidersHorizontal} from "lucide-react";
+import {ArrowLeft, ArrowRight, Disc3, Heart, Home, Library, ListMusic, Menu, Music2, Plus, Search, X, Settings2, Check, Clock3, Radio, Headphones, CassetteTape, SlidersHorizontal, WifiOff, Wifi, Download, LogIn} from "lucide-react";
 import YouTubeMusic from "./youtube/page";
 import AuthGate from "./components/AuthGate";
 import {authClient} from "../lib/auth/client";
-type User={id:string;name:string;email:string};
+import OfflineVault from "./components/OfflineVault";
+type User={id:string;name:string;email:string;isGuest?:boolean};
 
-type Screen="home"|"search"|"favorites"|"playlists"|"profile";
-export default function Page(){return <AuthGate>{user=><Spotibai key={user.id} user={user}/>}</AuthGate>}
-function Spotibai({user}:{user:User}){
+type Screen="home"|"search"|"favorites"|"playlists"|"offline"|"profile";
+export default function Page(){return <AuthGate>{(user,exitGuest)=><Spotibai key={user.id} user={user} exitGuest={exitGuest}/>}</AuthGate>}
+function Spotibai({user,exitGuest}:{user:User;exitGuest:()=>void}){
  const [screen,setScreen]=useState<Screen>("home");
+ const [online,setOnline]=useState(true);
+ useEffect(()=>{const sync=()=>setOnline(navigator.onLine);sync();window.addEventListener("online",sync);window.addEventListener("offline",sync);return()=>{window.removeEventListener("online",sync);window.removeEventListener("offline",sync)}},[]);
+ useEffect(()=>{localStorage.setItem("spotibai-active-offline-user",user.id)},[user.id]);
  const [query,setQuery]=useState("");
  const [suggestions,setSuggestions]=useState<{id:string;title:string;artist:string;thumbnail:string}[]>([]);
  const [recent,setRecent]=useState<string[]>([]);
@@ -53,6 +57,7 @@ function Spotibai({user}:{user:User}){
    <button className={screen==="search"?"selected":""} onClick={()=>go("search")}><Search size={19}/> Search music</button>
    <button className={screen==="favorites"?"selected":""} onClick={()=>go("favorites")}><Heart size={19}/> Liked songs</button>
    <button className={screen==="playlists"?"selected":""} onClick={()=>go("playlists")}><ListMusic size={19}/> Playlists</button>
+   <button className={screen==="offline"?"selected":""} onClick={()=>go("offline")}><Download size={19}/> Offline collection</button>
    <button className={screen==="profile"?"selected":""} onClick={()=>go("profile")}><Settings2 size={19}/> Profile & Settings</button>
   </nav>
   <div className="sidebar-bottom"><div className="side-promo"><span className="promo-spark"><Disc3 size={21}/></span><strong>Make it yours.</strong><p>Find music on YouTube, favorite the songs you enjoy, and build playlists.</p><button onClick={()=>go("search")}>Explore music <ArrowRight size={15}/></button></div><span className="sidebar-foot">Spotibai · Your sound, your space</span></div>
@@ -73,6 +78,7 @@ function Spotibai({user}:{user:User}){
    <div className="top-actions"><button className="avatar" title="Profile and settings" aria-label="Open settings" onClick={()=>go("profile")}>{(String(user.name||user.email||"S"))[0].toUpperCase()}</button></div>
   </header>
   <div className="scroll-content" ref={scrollArea}>
+   {!online&&<div className="spot-connection-notice" role="status"><WifiOff size={16}/> Offline now — your saved collection and on-device audio remain available. Streaming and search need an internet connection. <button onClick={()=>go("offline")}>Open offline library →</button></div>}
    {screen==="home"&&<div className="spotibai-home-enter listening-room">
     <section className="room-stage">
       <div className="room-light"/>
@@ -89,16 +95,19 @@ function Spotibai({user}:{user:User}){
       <button className="room-shelf-item" onClick={()=>go("favorites")}><span className="room-shelf-art heart"><Heart size={31}/></span><span><small>THE KEEPSAKES</small><strong>Liked records</strong><span>Everything worth keeping close.</span></span><ArrowRight size={19}/></button>
       <button className="room-shelf-item" onClick={()=>go("playlists")}><span className="room-shelf-art tapes"><CassetteTape size={35}/></span><span><small>THE MIXTAPES</small><strong>Your playlists</strong><span>Handpicked, side A to side B.</span></span><ArrowRight size={19}/></button>
     </div>
+    <section className="room-offline-entry"><div><Download size={20}/><span><strong>Take your own music anywhere.</strong><small>Keep music files you own on this device, even without Wi-Fi.</small></span></div><button onClick={()=>go("offline")}>Open offline library <ArrowRight size={16}/></button></section>
     <footer className="room-footer"><Headphones size={17}/><span>GOOD MUSIC. GOOD COMPANY. NO RUSH.</span><Radio size={17}/></footer>
    </div>}
+   {screen==="offline"&&<OfflineVault userId={user.id} isGuest={Boolean(user.isGuest)}/>}
    {screen==="profile"&&<section className="spot-settings studio-preferences search-view-enter">
  <div className="studio-settings-header"><div><span className="studio-eyebrow">SPOTIBAI / STUDIO SETTINGS</span><h1>Your space, your sound.</h1><p>Set the atmosphere of your listening room.</p></div><SlidersHorizontal size={27}/></div>
  <div className="studio-pref-row"><div className="studio-pref-label"><strong>Appearance</strong><span>Daylight or after dark</span></div><div className="studio-mode-switch"><button className={mode==="dark"?"active":""} onClick={()=>setTheme("dark")}>Night {mode==="dark"&&<Check size={14}/>}</button><button className={mode==="light"?"active":""} onClick={()=>setTheme("light")}>Daylight {mode==="light"&&<Check size={14}/>}</button></div></div>
  <div className="studio-pref-row"><div className="studio-pref-label"><strong>Room lighting</strong><span>Choose your signature color</span></div><div className="studio-swatches">{[["Violet","#b28dff"],["Coral","#f28ba8"],["Sage","#68c4ae"],["Sky","#7dabf4"],["Amber","#f3b86b"]].map(([name,value])=><button key={value} title={name} aria-label={name} aria-pressed={accent===value} className={accent===value?"active":""} onClick={()=>setColor(value)} style={{"--swatch":value} as React.CSSProperties}>{accent===value&&<Check size={15}/>}</button>)}<label className="studio-color-custom"><input type="color" aria-label="Custom room lighting color" value={accent} onChange={e=>setColor(e.target.value)}/></label></div></div>
  <div className="studio-pref-row"><div className="studio-pref-label"><strong>Motion</strong><span>Ambient movement and transitions</span></div><label className="studio-motion-toggle"><input type="checkbox" checked={motion} onChange={e=>setAnimation(e.target.checked)}/><span/></label></div>
- <button type="button" className="spot-signout" onClick={()=>void authClient.signOut()}>Sign out</button><div className="studio-settings-foot"><Music2 size={17}/> Preferences and music collections are currently stored per account on this device.</div>
+ <div className="spot-identity-bar"><span>{user.isGuest?"Browsing as Guest":`Signed in as ${user.name||user.email}`}</span><span>{online?"● Online":"○ Offline"}</span></div>
+ <button type="button" className="spot-signout" onClick={()=>user.isGuest?exitGuest():void authClient.signOut()}>{user.isGuest?"Sign in / Create account":"Sign out"}</button><div className="studio-settings-foot"><Music2 size={17}/> Preferences and music collections are saved on this device. Guest data stays separate from account data.</div>
  </section>}
- <div className={"search-view-enter "+(screen==="home"||screen==="profile"?"spot-view-hidden":"") }><YouTubeMusic userId={user.id} embedded initialQuery={submitted} initialSection={screen==="favorites"?"favorites":screen==="playlists"?"playlists":"discover"} createPlaylistSignal={newPlaylist} navigationSignal={navigationSignal} suggestedTrack={suggestPlay}/></div>
+ <div className={"search-view-enter "+(screen==="home"||screen==="profile"||screen==="offline"?"spot-view-hidden":"") }><YouTubeMusic userId={user.id} embedded initialQuery={submitted} initialSection={screen==="favorites"?"favorites":screen==="playlists"?"playlists":"discover"} createPlaylistSignal={newPlaylist} navigationSignal={navigationSignal} suggestedTrack={suggestPlay}/></div>
   </div>
  </main>
  </div>
