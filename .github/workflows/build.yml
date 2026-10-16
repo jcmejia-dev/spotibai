@@ -18,4 +18,8 @@ jobs:
       - name: Type check
         run: npx tsc --noEmit
       - name: Production build
+        env:
+          # Nonfunctional placeholders for config validation in CI only.
+          NEON_AUTH_BASE_URL: https://ci-placeholder.invalid/neondb/auth
+          NEON_AUTH_COOKIE_SECRET: "ci-only-not-a-real-secret-placeholder-64-characters-long-00000"
         run: npm run build
