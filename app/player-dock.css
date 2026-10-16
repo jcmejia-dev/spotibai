@@ -110,3 +110,8 @@
 @media(max-width:280px){
  .spotibai-real .yt-player-room.yt-watch-docked{width:calc(100vw - 24px)!important}
 }
+
+/* When browsing the playlist library, do not show the floating YouTube window.
+   Playing a playlist track opens the full player; navigating away pauses its video.
+   Keep the iframe mounted to preserve the current track and its queue. */
+.spotibai-real .yt-player-room.yt-player-paused-hidden{display:none!important;visibility:hidden!important;pointer-events:none!important}

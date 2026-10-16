@@ -94,7 +94,7 @@ function Spotibai({user,exitGuest}:{user:User;exitGuest:()=>void}){
  <div className="spot-identity-bar"><span>{user.isGuest?"Browsing as Guest":`Signed in as ${user.name||user.email}`}</span><span>{online?"● Online":"○ Offline"}</span></div>
  <button type="button" className="spot-signout" onClick={()=>user.isGuest?exitGuest():void authClient.signOut()}>{user.isGuest?"Sign in / Create account":"Sign out"}</button><div className="studio-settings-foot"><Music2 size={17}/> Preferences and music collections are saved on this device. Guest data stays separate from account data.</div>
  </section>}
- <div className={"search-view-enter "+(screen==="home"||screen==="profile"||screen==="offline"?"spot-view-hidden":"") }><YouTubeMusic userId={user.id} restorePlayerSignal={restorePlayerSignal} onTrackChange={setCurrentTrack} onOpenOffline={()=>go("offline")} embedded initialQuery={submitted} initialSection={screen==="favorites"?"favorites":screen==="playlists"?"playlists":"discover"} createPlaylistSignal={newPlaylist} navigationSignal={navigationSignal} suggestedTrack={suggestPlay}/></div>
+ <div className={"search-view-enter "+(screen==="home"||screen==="profile"||screen==="offline"?"spot-view-hidden":"") }><YouTubeMusic userId={user.id} allowCompactPlayer={screen!=="playlists"} restorePlayerSignal={restorePlayerSignal} onTrackChange={setCurrentTrack} onOpenOffline={()=>go("offline")} embedded initialQuery={submitted} initialSection={screen==="favorites"?"favorites":screen==="playlists"?"playlists":"discover"} createPlaylistSignal={newPlaylist} navigationSignal={navigationSignal} suggestedTrack={suggestPlay}/></div>
   </div>
  </main>
  <nav className="spot-mobile-tabs" aria-label="Primary navigation">

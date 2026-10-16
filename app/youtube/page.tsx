@@ -8,7 +8,7 @@ const FAVORITES="favorites-v1";
 const PLAYLISTS="playlists-v1";
 function load<T>(key:string,fallback:T):T {try{const value=localStorage.getItem(key);return value?JSON.parse(value) as T:fallback}catch{return fallback}}
 function decode(s:string){if(typeof document==="undefined")return s;const el=document.createElement("textarea");el.innerHTML=s;return el.value}
-export default function YouTubeMusic({embedded=false,initialQuery="",initialSection="discover",createPlaylistSignal=0,navigationSignal=0,restorePlayerSignal=0,suggestedTrack=null,userId="",onOpenOffline,onTrackChange}:{onTrackChange?:(track:{id:string;title:string;artist:string}|null)=>void;onOpenOffline?:()=>void;userId?:string;embedded?:boolean;initialQuery?:string;initialSection?:string;createPlaylistSignal?:number;navigationSignal?:number;restorePlayerSignal?:number;suggestedTrack?:({id:string;title:string;artist:string;thumbnail:string;nonce:number}|null)}){
+export default function YouTubeMusic({embedded=false,initialQuery="",initialSection="discover",createPlaylistSignal=0,navigationSignal=0,restorePlayerSignal=0,suggestedTrack=null,userId="",onOpenOffline,onTrackChange,allowCompactPlayer=true}:{allowCompactPlayer?:boolean;onTrackChange?:(track:{id:string;title:string;artist:string}|null)=>void;onOpenOffline?:()=>void;userId?:string;embedded?:boolean;initialQuery?:string;initialSection?:string;createPlaylistSignal?:number;navigationSignal?:number;restorePlayerSignal?:number;suggestedTrack?:({id:string;title:string;artist:string;thumbnail:string;nonce:number}|null)}){
  const storageKey=(key:string)=>"spotibai-user-"+userId+"-"+key;
  const [q,setQ]=useState("");const [term,setTerm]=useState("");
  const [results,setResults]=useState<Song[]>([]);
@@ -138,7 +138,7 @@ export default function YouTubeMusic({embedded=false,initialQuery="",initialSect
   <main className="yt-main">
     <header className="yt-top"><a href="/" className="yt-mobile-back"><ArrowLeft size={20}/></a><span className="yt-tag"><Youtube size={17}/> YouTube Music Discovery</span><a href="/" className="yt-top-home">Spotibai home ↗</a></header>
     <div className="yt-content">
-    {playing&&<div className={"yt-watch-page yt-player-room "+(watchOpen?"":"yt-watch-docked")}>
+    {playing&&<div className={"yt-watch-page yt-player-room "+(watchOpen?"":allowCompactPlayer?"yt-watch-docked":"yt-player-paused-hidden")}>
       {!watchOpen&&<div className="spot-player-dock-head"><span className="spot-player-dock-live" aria-hidden="true"/><div className="spot-player-dock-song"><strong title={decode(playing.title)}>{decode(playing.title)}</strong><small>{decode(playing.artist)}</small></div><button type="button" title="Expand music player" aria-label="Expand music player" onClick={()=>setWatchOpen(true)}><Maximize2 size={17}/></button><button type="button" title="Stop playback" aria-label="Stop playback" onClick={stopPlayback}><X size={17}/></button></div>}
       <div className="yt-player-head">
        <button className="yt-watch-back" onClick={()=>setWatchOpen(false)} title="Return to your collection" aria-label="Back to music collection"><ArrowLeft size={21}/><span>Back to your music</span></button>
@@ -147,7 +147,7 @@ export default function YouTubeMusic({embedded=false,initialQuery="",initialSect
       </div>
       <div className="yt-watch-layout">
         <div className="yt-watch-main">
-          <div className="yt-frame"><YouTubeVideo videoId={playing.id} title={decode(playing.title)} active={true} onEnded={nextInQueue}/></div>
+          <div className="yt-frame"><YouTubeVideo videoId={playing.id} title={decode(playing.title)} active={watchOpen||allowCompactPlayer} onEnded={nextInQueue}/></div>
           <div className="yt-player-track-meta">
            <div className="yt-track-disc"><Disc3 size={20}/></div>
            <div><span className="yt-player-meta-label">CURRENTLY SPINNING</span><h1>{decode(playing.title)}</h1><p>{decode(playing.artist)}</p></div>
