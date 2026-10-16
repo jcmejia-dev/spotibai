@@ -20,7 +20,7 @@ export default function SpotibaiShell(){
  const [webError,setWebError]=useState('');
  const [canGoBack,setCanGoBack]=useState(false);
  const [refreshKey,setRefreshKey]=useState(0);
- const ref=useRef<WebView>(null);
+ const ref=useRef<WebView<{}>>(null);
  useEffect(()=>{
   // API domain can be changed in Native > Settings. Sync it when returning here.
   AsyncStorage.getItem('spotibai-native-v2').then(raw=>{
@@ -40,7 +40,7 @@ export default function SpotibaiShell(){
  const openOriginal=()=>{setMode('original');setWebError('')};
  const loadError=()=>{setLoading(false);setWebError('Spotibai could not load. Check that your production Vercel domain works and you are online.')};
  return <SafeAreaView style={{flex:1,backgroundColor:'#120d18'}} edges={['top','bottom']}>
-  <StatusBar barStyle="light-content" backgroundColor="#120d18"/>
+  <StatusBar barStyle="light-content"/>
   {mode==='original'?<View style={{flex:1}}>
     {webError?<View style={{flex:1,alignItems:'center',justifyContent:'center',padding:25}}>
       <Image source={icon} style={{width:70,height:70,borderRadius:15}}/>
@@ -50,7 +50,7 @@ export default function SpotibaiShell(){
       <Text style={{fontWeight:'900',color:'#1d1026'}}>Try again</Text></Pressable>
       <Pressable onPress={()=>void Linking.openURL(site)} style={{padding:13,marginTop:12}}><Text style={{color:'#b28dff'}}>Open website in browser ↗</Text></Pressable>
     </View>:
-    <WebView
+    <WebView<{}>
       key={site+'-'+refreshKey}
       ref={ref}
       source={{uri:site+'/'}}
@@ -74,11 +74,6 @@ export default function SpotibaiShell(){
       onNavigationStateChange={(s:WebViewNavigation)=>{setCanGoBack(s.canGoBack);if(!s.loading)setLoading(false)}}
       onError={loadError}
       onHttpError={e=>{if(e.nativeEvent.statusCode>=400&&e.nativeEvent.url.startsWith(site))loadError()}}
-      onShouldStartLoadWithRequest={req=>{
-       if(!req.url.startsWith('http'))return true;
-       // Open external protocols in appropriate apps; keep legitimate YouTube iframe resources inside WebView.
-       return true;
-      }}
     />}
    </View>:<View style={{flex:1}}><SpotibaiComplete/></View>}
    {/* Minimal native mode switch, never fakes being part of the original website. */}
